@@ -26,12 +26,12 @@ IO_out_LOP,T,g P/d,outflow of LOP,
 IO_out_ROP,T,g P/d,outflow of ROP,
 IO_out_DIP,T,g P/d,outflow of DIP,
 area,1,m^2,wetland surface area,uniform flat surface
-H_b,0.1,m,height of belowground compartment (sediment column),"NA"
-H_w,0,m,height of water relative to sediment surface,"NA"
-H_a,H_w,m,height of aboveground compartment,"NA"
-Z_a,0,m,elevation NAVD88 of sediment surface (bottom of aboveground compartment),"NA"
-Z_b,Z_a - H_b,m,elevation NAVD88 of the belowground compartment bottom,"NA"
-Z_w,Z_a + H_w,m,elevation NAVD88 of water surface,"NA"
+H_b,0.1,m,height of belowground compartment (sediment column),NA
+H_w,0,m,height of water relative to sediment surface,NA
+H_a,H_w,m,height of aboveground compartment,NA
+Z_a,0,m,elevation NAVD88 of sediment surface (bottom of aboveground compartment),NA
+Z_b,Z_a - H_b,m,elevation NAVD88 of the belowground compartment bottom,NA
+Z_w,Z_a + H_w,m,elevation NAVD88 of water surface,NA
 TW_max,23,degC,max daily mean water tempurature,fit to site data or assume equal to mean air temp on Aug 1
 TW_min,4,degC,min daily mean water tempurature,fit to site data or assume equal to 4 degC on Jan 31
 TA_h_max,28,degC,max daily high air tempurature,fit to data from local city/town (e.g. https://weatherspark.com/)
