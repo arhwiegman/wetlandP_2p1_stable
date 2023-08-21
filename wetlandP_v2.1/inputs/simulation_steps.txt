@@ -1,0 +1,17 @@
+In this chapter I demonstrate the use of the model for estimating event level P dynamics, using a simple set of inputs. 
+
+Environmental Factors:
+Temperature = c(2,20) # AKA biology effects
+Flooddepth = c(0.5) # keep constant
+Floodduration = c(2,20) # 
+Residence time = c(0.1,10,20) # affects flow velocity 
+ISS = c(5,50) # inorganic suspended sediments 
+OSS = c(1,5) # organic suspended sediments
+SRP = c(0.005,0.05) # the range of what was observed in the river
+ISS2TP_slope = c(0.5e-3,1e-3) # 1e-3 is roughly what I observed at otter creek
+
+Soil Factors:
+LOI = c(0.05,0.5) #(affects bulk density and combines with Fines to affect Smax)
+Fines = c(0.7,0.9) #(combines with LOI to affect Smax)
+PSR = c(0.05,0.5) #(combines with LOI and fines to affect, exchangeable IP pool)
+

@@ -1,0 +1,214 @@
+---
+title: "wetlandP version 1.1 -- Documentation"
+author: "Adrian Wiegman"
+date: "5/17/2020"
+output: 
+  html_document:
+    toc: TRUE
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## About
+
+### This Project 
+
+**Quantifying phosphorus retention in restored riparian wetlands of the Lake Champlain Basin**
+
+EPA Grant: LC00A00394
+Job Cost Code: 995-002-001
+
+Prepared by:
+Eric D. Roy, Ph.D., University of Vermont
+Breck Bowden, Ph.D., University of Vermont
+Kristin Underwood, Ph.D., University of Vermont
+Adrian Wiegman, M.S., University of Vermont
+
+Prepared for:
+Lake Champlain Basin Program
+54 West Shore Road
+Grand Isle, VT 05458
+
+### This Folder
+
+This folder contains the wetlandP model (v. 1.1). The model is an ordinary differential equation model implemented in R (v. 4.0.0) and Rstudio (v. 1.2.1) or later. with the `deSolve` (v. 1.28) package (Soetaert et al. 2010). This document gives details on how the folder is organized and how to implement the model. The model relies on the packages within the `tidyverse` (Wickham 2019), for plotting, data manipulation and string editing. 
+
+The development versions of model are hosted on github @ https://github.com/arhwiegman/wetlandP/model_versions/
+
+The stable versions model is also hosted uvm gitlab page.
+[insert link]. 
+
+### Buildnotes
+
+wetlandP_v1.1
+
+#### Status (of this version)
+
+1. The subroutines have been checked for mass balance and numerical stability. The model functions when water is above and below the soil surface during static simulations. 
+2. Model rate functions have been checked but metadata needs to be updated. 
+
+#### Next steps (for future versions)
+
+1. The model mass balance and stability needs to be verified for dynamic simulations 
+2. Subroutines for calibration need to be coded
+3. Scenarios need to be coded
+4. The model performance needs to be optimized for run speed
+
+## Getting Started
+
+To run the model, click on the `wetlandP_vX.X.Rproj` file. This will open up Rstudio with the working directory set to `wetlandP_vX.X`. 
+
+### File Structure
+
+The working directory contains folders for model `documentation`, `scripts`,  `inputs`, and `outputs`. The `packrat` folder contains libraries for model's dependancies (e.g. `deSolve`). A current list of the working directory is given below. 
+
+```{r}
+dir()
+```
+
+### Documentation Folder
+
+Currently the most detailed documentation of the model is within the model scripts. Open the [wetlandP_documentation](## Documentation) notebook in your web browser for a summary of the model state variables and the assumptions governing their differential equations.
+
+### Scripts Folder
+
+```{r}
+dir("scripts")
+```
+
+The table below provides a description of each of the scripts used by the model.
+
+| name | description |
+| --- | --- |
+| `xecute.R` | Loads source code, executes simulation and manages data  outputs. This script must be run to implement the model. To run the file: in `Rstudio` with the `xecute.R` file open press `cmd/crtl + shift + enter` |
+| `parameters.R` | The main way to manipulate outputs. This includes both nurmerical constants to be used in model calculations as well as model run specifications (e.g. static or dynamic, simulation time) see `fn_edit_parameter_values.R` to change individual parameters for before  a given run. |
+| `model.R` | The high level script controling flow of subroutines in the wetlandP model. See subroutines for details of model calculations.|
+| `initialize.R` | initializes the model state variables based on the parameter values and functions provided. |
+| `subroutines.R` | a series of subroutines that calculate new values of variables in the model based on functions, parameters and variable values in the model environment. |
+| `functions.R` | a high level script that sources other functions. |
+| `fns_X.R` | For detailed functions pertainin to `X` aspect of the model |
+
+### Inputs Folder
+
+Inputs are data that are used to force or calibrate the model. Examples include water level data, weather station data, nutrient concentrations and so on. A calibration subroutine still needs to be added so the inputs folder is currently empty. 
+
+### Outputs Folder
+
+The model saves outputs with a prefix then the simulation then a timestamp. The model produces three types of output: 
+
+| prefix | extension | description | 
+|---|---|---|
+| "sim_" | ".Rdata" | an image of the R environment objects saved upon execution of the model run. Use `load("sim_[run name].Rdata")` in R to load the environment objects for the simulation. |
+| "fig" | ".png" | time series plots of variables |
+| `outputs`| ".csv" | a comma delimited data table of variable values along the time series the model run | 
+
+## Model Documenation Tables
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+options(knitr.kable.NA = '')
+source("documentation/generate_documentation_tables.R")
+```
+
+The figure below shows a plot of the This section contains summary tables documenting the major components of the wetlandP model. *The current model version is 1.1*. 
+
+```{r, fig.fullwidth=TRUE}
+load("C:\\Workspace\\wetlandP\\model_versions\\wetlandP_v1\\wetlandP_v1.1\\outputs\\sim_static_Z_w_2020-05-18_May051589815528.Rdata")
+print(figs$states)
+print(fig_DIP)
+```
+
+### State variables
+```{r}
+df <- readxl::read_excel("documentation/stoicheometry.xlsx",
+                   "states",
+                   range = "B2:D16")
+knitr::kable(df,
+               digits=4,
+               cap="state variables calculated with ordinary differential equations",
+               format = "pandoc")
+```
+
+### Processes 
+
+#### Flows
+```{r}
+df <- fn_generate_doc_table(fconn="scripts/subroutines.R",
+                      startline=408,
+                      endline=435,
+                      fname="processes")
+df$Value <- str_replace_all(df$Value,"\\*","\\\\\\*")
+
+knitr::kable(df,
+             digits=4,
+             cap="process flows (adding or subtracting from state variables)",
+             format = "pandoc")
+
+```
+
+#### Rates
+```{r}
+df <- readxl::read_excel("documentation/stoicheometry.xlsx",
+                   "rates",
+                   range = "A2:D12")
+knitr::kable(df,
+             digits=4,
+             cap="process rates (calculated as a function of forcing variables, intermediate variables and state variables)",
+             format = "pandoc")
+```
+
+### Parameters 
+
+```{r}
+df <- fn_generate_doc_table(
+  fconn="scripts/parameters.R",
+  fname="parameters",
+  patt = "^[^#]+=.+#.+\\|.+\\|.*$", # string pattern
+  startline = 0,
+  endline = -1L)
+df$Value <- str_replace_all(df$Value,"\\*","\\\\\\*")
+knitr::kable(df,
+             digits=4,
+             format = "pandoc",
+             cap="parameters (numeric constants and run specifications)")
+```
+ 
+### Differential Equations
+
+Differential Equations for the model are generated from stoicheometry matrix of the **state variables** and **process flows** (see **"mass balance"**).
+
+```{r}
+df <- read_lines(as.character(sub_diffeqs)) %>% 
+  str_subset("=") %>% 
+  str_squish() %>%
+  str_split("=",simplify = TRUE)
+colnames(df) <- c("Name","Value")
+knitr::kable(df,
+             format = "pandoc",
+             cap="Differential equations for model states")
+```
+ 
+### Mass balance
+
+Differential Equations for the model are generated from stoicheometry matrix of the **state variables** (state or states for short) and **process flows** (see `stoicheometry.xlsx`). In this matrix the modeler enters a value of 1 (adding to a state), -1 (subtracting from state) or blank (not interacting with a state) for each combination of a state variable and a process flow. The table below contains the stoicheometry matrix for the current model. Note the column `balance` is the row sum for a given process, values above or below than zero indicates that a process adds/removes mass from the model domain, while a balance of zero indicates that a process is conservative (does not affect the total mass in the domain). 
+
+```{r}
+df <- readxl::read_excel("documentation/stoicheometry.xlsx",
+                   "stoicheometry",
+                   range = "B2:P29") 
+knitr::kable(df,
+             digits=4,
+             format = "pandoc",
+             cap="parameters (numeric constants and run specifications)",
+             escape=FALSE)
+```
+ 
+## References
+
+  Karline Soetaert, Thomas Petzoldt, R. Woodrow Setzer (2010).
+  Solving Differential Equations in R: Package deSolve. Journal
+  of Statistical Software, 33(9), 1--25. URL
+  http://www.jstatsoft.org/v33/i09/ DOI 10.18637/jss.v033.i09

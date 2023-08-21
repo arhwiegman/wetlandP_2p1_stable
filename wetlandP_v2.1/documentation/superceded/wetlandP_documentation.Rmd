@@ -1,0 +1,102 @@
+---
+title: "wetlandP documentation"
+author: "Adrian Wiegman (adrian.wiegman@uvm.edu)"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_notebook
+tables: TRUE
+figures: TRUE
+---
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+options(knitr.kable.NA = '')
+source("documentation/generate_documentation_tables.R")
+```
+
+This file contains a summary tables documenting the major components of the wetlandP model. *The current model version is 1.1*. 
+
+
+## State variables
+```{r}
+df <- readxl::read_excel("documentation/stoicheometry.xlsx",
+                   "states",
+                   range = "B2:D16")
+knitr::kable(df,
+               digits=4,
+               cap="state variables calculated with ordinary differential equations",
+               format = "pandoc")
+```
+
+## Processes 
+
+### Flows
+```{r}
+df <- fn_generate_doc_table(fconn="scripts/subroutines.R",
+                      startline=408,
+                      endline=435,
+                      fname="processes")
+df$Value <- str_replace_all(df$Value,"\\*","\\\\\\*")
+
+knitr::kable(df,
+             digits=4,
+             cap="process flows (adding or subtracting from state variables)",
+             format = "pandoc")
+
+```
+
+### Rates
+```{r}
+df <- readxl::read_excel("documentation/stoicheometry.xlsx",
+                   "rates",
+                   range = "A2:D12")
+knitr::kable(df,
+             digits=4,
+             cap="process rates (calculated as a function of forcing variables, intermediate variables and state variables)",
+             format = "pandoc")
+```
+
+## Parameters 
+
+```{r}
+df <- fn_generate_doc_table(
+  fconn="scripts/parameters.R",
+  fname="parameters",
+  patt = "^[^#]+=.+#.+\\|.+\\|.*$", # string pattern
+  startline = 0,
+  endline = -1L)
+df$Value <- str_replace_all(df$Value,"\\*","\\\\\\*")
+knitr::kable(df,
+             digits=4,
+             format = "pandoc",
+             cap="parameters (numeric constants and run specifications)")
+```
+ 
+## Differential Equations
+
+Differential Equations for the model are generated from stoicheometry matrix of the **state variables** and **process flows** (see **"mass balance"**).
+
+```{r}
+df <- read_lines(as.character(sub_diffeqs)) %>% 
+  str_subset("=") %>% 
+  str_squish() %>%
+  str_split("=",simplify = TRUE)
+colnames(df) <- c("Name","Value")
+knitr::kable(df,
+             format = "pandoc",
+             cap="Differential equations for model states")
+```
+ 
+## Mass balance
+
+Differential Equations for the model are generated from stoicheometry matrix of the **state variables** (state or states for short) and **process flows** (see `stoicheometry.xlsx`). In this matrix the modeler enters a value of 1 (adding to a state), -1 (subtracting from state) or blank (not interacting with a state) for each combination of a state variable and a process flow. The table below contains the stoicheometry matrix for the current model. Note the column `balance` is the row sum for a given process, values above or below than zero indicates that a process adds/removes mass from the model domain, while a balance of zero indicates that a process is conservative (does not affect the total mass in the domain). 
+
+```{r}
+df <- readxl::read_excel("documentation/stoicheometry.xlsx",
+                   "stoicheometry",
+                   range = "B2:P29") 
+knitr::kable(df,
+             digits=4,
+             format = "pandoc",
+             cap="parameters (numeric constants and run specifications)",
+             escape=FALSE)
+```
+ 

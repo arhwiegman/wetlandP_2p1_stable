@@ -1,0 +1,3 @@
+﻿date,days_elapsed,t,Uw,ip,Tair,Twater,ET,Hw,Tw,site_plot,Zs,A,dHw,Vw,dt,Qip,QET,dVw,Qg,tau,Qnet,QHRT,Qout,Qin,Q_net_check,Q_check
+4/10/2020,0,0,0,0,10,10,0,0.5,10,NA,0,1,0,0.5,1,0,0,0,0,100,0,0,0.005,0.005,0,0
+4/20/2020,10,10,0,0,10,10,0,0.5,10,NA,0,1,0,0.5,1,0,0,0,0,100,0,0,0.005,0.005,0,0

@@ -1,0 +1,61 @@
+
+  # SIMULATION SPECIFICATIONS -------------
+  # name = value # data type | description | assumptions
+  version = "wetlandPv02" # chr | name of the model version |
+  simname = "default" # chr | name of the model simulation |
+  simtype = "static" # chr | charater string indicating the objective of the model run used | "static" for steady sate, "forecast" for projections and scenario analysis, and "calibration" for training/calibration
+  startday = 0 # d | julian day (0-365) of simulation start | based period of forcing data
+  simyears = 14/365 # y | number of years in simulation | ""
+  increment = 1 # d | number of days in each time step of model | if not equal to 1 then accuracy of simulation needs to be verified
+  extended_outputs = T # logical | True/False indicating if the purpose of the run is to debug | if so writes extended outputs, this significantly slows the run time
+  inputdir = NULL # chr | name of the path to the folder containing input data
+  forcingfile = NULL # chr | name of the input data file 
+  solver = "lsoda" # chr | name of ode solver method "lsoda","euler","iter","rk4"
+  
+  
+  # LOGICAL PARAMETERS ---------------------
+  # SELECT PROCESSES TO BE SIMULATED ------------------
+  # Parameters with "IO_" prefix turn process flow rates on and off (toggle)
+  # must be logical T/F TRUE/FALSE
+  # name = expression # units | description | assumptions
+  # water 
+  IO_Q_in = T # logical | toggles surface inflow | T/F or 1/0
+  IO_Q_precip = T # logical  | toggle precipitation | 
+  IO_Q_ground = T # logical | toggles net groundwater flow (percolation  - infiltration)| 
+  IO_Q_ET = T # logical | toggles evapotranspiration | 
+  IO_Q_out = T # logical  | toggles surface outflow | 
+ 
+  # plant, sediments and phosphorus
+  IO_assim_shootP = T # logical | toggles assimilation of shoot P | 
+  IO_assim_rootP = T  # logical  |  toggles growth of root P |
+  IO_mort_shootP2litterP = T # logical  | toggles mortality of shoots | 
+  IO_mort_rootP2LOP = T # logical | toggles mortality of root P to LOP |
+  IO_mort_rootP2ROP = T # logical | toggles mortatlity of root P |
+  IO_sed_IM = T # logical | toggles sedimentation of inorganic matter | 
+  IO_sed_OM = T # logical  | toggles sedimentation of refractory organic P
+  IO_decay_litter = T # logical | toggles decomposition of litter P to refractory organic P | 
+  IO_decay_LOP = T # logical  | toggles decomposition of labile OP | 
+  IO_decay_ROP = T # logical  | toggles decomposition of refractory OP | 
+  IO_diffus = T # logical | toggles diffusion of DIP from b to a | 
+  IO_adsorp = T  # logical | toggles adsorption of DIP onto PIP | 
+  
+  IO_in_IM = T # logical   | toggles inflow of inorganic matter as ISS | 
+  IO_in_PIP = T #logical | toggles inflow of PIP | 
+  IO_in_LOP = T # logical  | toggles inflow of labile organic P | 
+  IO_in_ROP = T # logical  | toggles inflow of recalcitrant organic P | 
+  IO_in_DIP = T # logical  | toggles inflow of dissolved inorganic P | 
+  IO_out_IM = T # logical | toggles outflow of IM | 
+  IO_out_PIP = T # logical  | toggles outflow of PIP | 
+  IO_out_LOP = T # logical  | toggles outflow of LOP | 
+  IO_out_ROP = T # logical | toggles outflow of ROP | 
+  IO_out_DIP = T # logical  | toggles outflow of DIP |
+  
+  # process functions 
+  IO_DIP_E_langmuir = F # logical | turns on the use of langmuir model for caclulating DIP_E |
+  IO_variable_k_E = T # logical  | toggles variable calculation of k_E |
+  IO_variable_k_Ex_max = F # logical | toggles on variable calculation of Ex_max using statistical fit to fines and LOI |
+  IO_anoxic = F # logical  | toggles anaerobic conditions for DIP_E concentration |
+  
+  IO_variable_DIP_E = F # logical  | toggles variable calculation of DIP_E | if = F, then k_DIP_E is used
+  IO_Q_net = T # logical | toggles calculation of inflow and outflow from Qnet, Vw and HRT | see hydrology subroutine
+  IO_HRT_power_model = F # logical | toggles calculation HRT from a power model | if Zw > 0, HRT = a*Zw^b, where Zw is elevation relative to lowest elevation in the wetland, and b<0

@@ -1,0 +1,208 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={wetlandP documentation},
+  pdfauthor={Adrian Wiegman},
+  pdfborder={0 0 0},
+  breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-2}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{wetlandP documentation}
+\author{Adrian Wiegman}
+\date{5/17/2020}
+
+\begin{document}
+\maketitle
+
+This file contains a summary tables documenting the major components of
+the wetlandP model. \emph{The current model version is 1.1}.
+
+\hypertarget{state-variables}{%
+\subsection{State variables}\label{state-variables}}
+
+\begin{verbatim}
+## # A tibble: 14 x 3
+##    name    unit  description                 
+##    <chr>   <chr> <chr>                       
+##  1 IM_a    g d.w inorganic matter aboveground
+##  2 IM_b    g d.w inorganic matter belowground
+##  3 shootP  g P   aboveground live shoot P    
+##  4 rootP   g P   belowground live root P     
+##  5 litterP g P   aboveground litter P        
+##  6 ROP_a   g P   refractory OP aboveground   
+##  7 LOP_a   g P   labile OP aboveground       
+##  8 PIP_a   g P   particulate IP aboveground  
+##  9 DIP_a   g P   dissolved IP aboveground    
+## 10 ROP_b   g P   refractory OP belowground   
+## 11 LOP_b   g P   labile OP belowground       
+## 12 PIP_b   g P   particulate IP belowground  
+## 13 DIP_b   g P   dissolved IP belowground    
+## 14 <NA>    <NA>  <NA>
+\end{verbatim}
+
+\hypertarget{processes}{%
+\subsection{Processes}\label{processes}}
+
+\hypertarget{flows}{%
+\subsubsection{Flows}\label{flows}}
+
+\begin{verbatim}
+##                  Name                                 Value     Unit
+## 1        assim_shootP                    r_assim*(k_f_sh_G)    g P/d
+## 2         assim_rootP                  r_assim*(1-k_f_sh_G)    g P/d
+## 3 mort_shootP2litterP                   r_mort_shoot*shootP    g P/d
+## 4      mort_rootP2LOP   r_mort_root*rootP*(k_f_labile_root)    g P/d
+## 5      mort_rootP2ROP r_mort_root*rootP*(1-k_f_labile_root)    g P/d
+## 6              sed_IM                         r_sed_IM*IM_a g d.w./d
+##                         Description Assumptions
+## 1           assimilation of shoot P            
+## 2                  growth of root P            
+## 3                  growth of root P            
+## 4       mortality of shoot P to LOP            
+## 5              mortatlity of root P            
+## 6 sedimentation of inorganic matter
+\end{verbatim}
+
+\hypertarget{rates}{%
+\subsubsection{Rates}\label{rates}}
+
+\begin{verbatim}
+## # A tibble: 10 x 4
+##    name     unit  description                    assumptions                    
+##    <chr>    <chr> <chr>                          <chr>                          
+##  1 r_assim  g P/d amount of DIP_b P (g) assimil~ affected by nutrient availabil~
+##  2 r_decay~ 1/d   proportional rate of litter d~ affected by temperature (Wang ~
+##  3 r_decay~ 1/d   proportional rate of ROP deco~ affected by temperature (Wang ~
+##  4 r_decay~ 1/d   proportional rate of LOP deco~ affected by temperature (Wang ~
+##  5 r_mort_~ 1/d   proportional rate of shoot de~ increases as a step function w~
+##  6 r_mort_~ 1/d   proportional rate of root dea~ constant (Morris et al. 2002)  
+##  7 r_adsorp g P/d ammount of DIP adsorbed to PIP affected by temperature and so~
+##  8 r_diffus g P/d amount of diffusion of DIP_b ~ affected by temperature, visco~
+##  9 r_sed_IM 1/d   proportional rate of sediment~ affected by settling velocity ~
+## 10 r_sed_OM 1/d   proportional rate of sediment~ affected by settling velocity ~
+\end{verbatim}
+
+\hypertarget{parameters}{%
+\subsection{Parameters}\label{parameters}}
+
+\begin{verbatim}
+##       Name Value  Unit                      Description
+## 1   # name value units                      description
+## 2   TW_max    23  degC max daily mean water tempurature
+## 3   TW_min     4  degC min daily mean water tempurature
+## 4 TA_h_max    28  degC   max daily high air tempurature
+## 5 TA_h_min    -2  degC   min daily high air tempurature
+## 6 TA_l_max    17  degC    max daily low air tempurature
+##                                                         Assumptions
+## 1                                                       assumptions
+## 2        fit to site data or assume equal to mean air temp on Aug 1
+## 3              fit to site data or assume equal to 4 degC on Jan 31
+## 4 fit to data from local city/town (e.g. https://weatherspark.com/)
+## 5                                                                ""
+## 6                                                                ""
+\end{verbatim}
+
+\hypertarget{differential-equations}{%
+\subsection{Differential Equations}\label{differential-equations}}
+
+Differential Equations for the model are generated from stoicheometry
+matrix of the \textbf{state variables} and \textbf{process flows} (see
+\textbf{``mass balance''}).
+
+\hypertarget{mass-balance}{%
+\subsection{Mass balance}\label{mass-balance}}
+
+Differential Equations for the model are generated from stoicheometry
+matrix of the \textbf{state variables} (state or states for short) and
+\textbf{process flows} (see \texttt{stoicheometry.xlsx}). In this matrix
+the modeler enters a value of 1 (adding to a state), -1 (subtracting
+from state) or blank (not interacting with a state) for each combination
+of a state variable and a process flow. The table below contains the
+stoicheometry matrix for the current model. Note the column
+\texttt{balance} is the row sum for a given process, values above or
+below than zero indicates that a process adds/removes mass from the
+model domain, while a balance of zero indicates that a process is
+conservative (does not affect the total mass in the domain).
+
+\begin{verbatim}
+## # A tibble: 27 x 15
+##    balance `variables (rig~  IM_a  IM_b shootP rootP litterP ROP_a LOP_a PIP_a
+##      <dbl> <chr>            <dbl> <dbl>  <dbl> <dbl>   <dbl> <dbl> <dbl> <dbl>
+##  1       0 assim_shootP        NA    NA      1    NA      NA    NA    NA    NA
+##  2       0 assim_rootP         NA    NA     NA     1      NA    NA    NA    NA
+##  3       0 mort_shootP2lit~    NA    NA     -1    NA       1    NA    NA    NA
+##  4       0 mort_rootP2LOP      NA    NA     NA    -1      NA    NA    NA    NA
+##  5       0 mort_rootP2ROP      NA    NA     NA    -1      NA    NA    NA    NA
+##  6       0 sed_IM              -1     1     NA    NA      NA    NA    NA    NA
+##  7       0 sed_PIP             NA    NA     NA    NA      NA    NA    NA    -1
+##  8       0 sed_LOP             NA    NA     NA    NA      NA    NA    -1    NA
+##  9       0 sed_ROP             NA    NA     NA    NA      NA    -1    NA    NA
+## 10       0 dec_litter2LOP_a    NA    NA     NA    NA      -1    NA     1    NA
+## # ... with 17 more rows, and 5 more variables: DIP_a <dbl>, ROP_b <dbl>,
+## #   LOP_b <dbl>, PIP_b <dbl>, DIP_b <dbl>
+\end{verbatim}
+
+\end{document}
