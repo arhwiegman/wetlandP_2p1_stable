@@ -1,0 +1,131 @@
+<table>
+<caption>local (measured) parameters</caption>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="left">Value</th>
+<th align="left">Unit</th>
+<th align="left">Description</th>
+<th align="left">Assumptions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">area</td>
+<td align="left">1</td>
+<td align="left">m^2</td>
+<td align="left">wetland surface area</td>
+<td align="left">uniform flat surface</td>
+</tr>
+<tr class="even">
+<td align="left">H_b</td>
+<td align="left">0.1</td>
+<td align="left">m</td>
+<td align="left">height of belowground compartment (sediment
+column)</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">k_HRT</td>
+<td align="left">1e3</td>
+<td align="left">d</td>
+<td align="left">hydraulic residence time of wetland surface water</td>
+<td align="left">calculated by dividing total system water volume (m3)
+by outlfow rate (m3/d), often changes as function of system water
+volume</td>
+</tr>
+<tr class="even">
+<td align="left">k_TSS</td>
+<td align="left">15</td>
+<td align="left">g/m^3</td>
+<td align="left">total suspended solids of inflow</td>
+<td align="left">based on field data, median of observations, 3.5 at
+prindle, 23.8 at union st, 12.25 at swamp rd</td>
+</tr>
+<tr class="odd">
+<td align="left">k_TP</td>
+<td align="left">0.05</td>
+<td align="left">g P/m^3</td>
+<td align="left">TP concentration (mg P /L) in inflow</td>
+<td align="left">0.071 at prindle, 0.059 at union, 0.056 at swamp</td>
+</tr>
+<tr class="even">
+<td align="left">k_LOI</td>
+<td align="left">0.20</td>
+<td align="left">g/g</td>
+<td align="left">initial fraction of organic matter in total mass of
+below ground compartment</td>
+<td align="left">measured as soil loss-on-ignition</td>
+</tr>
+<tr class="odd">
+<td align="left">k_PSR</td>
+<td align="left">0.20</td>
+<td align="left">mol/mol</td>
+<td align="left">P Saturation Ratio</td>
+<td align="left">molar ratio of oxalate extractable P/(Al + Fe) (Nair et
+al. 2004), fit to field data, prindle 0.09 - 0.15, union 0.08 - 0.13,
+swamp rd 0.11 - 0.26</td>
+</tr>
+<tr class="even">
+<td align="left">k_Ex_max</td>
+<td align="left">4</td>
+<td align="left">g/kg</td>
+<td align="left">maximum P storage capacity</td>
+<td align="left">31*(Al/27 + Fe/56), where Al and Fe are determined by
+acid ammonium oxalate extraction, fit to field data, ranging from 3.3 -
+5.5 prindle, 5.0 - 6.4 union, 3.44 - 5.1 swamp</td>
+</tr>
+<tr class="odd">
+<td align="left">k_clay</td>
+<td align="left">0.1</td>
+<td align="left">g/g</td>
+<td align="left">clay content of inorganic matter, used for particle
+settling velocity</td>
+<td align="left">from soil textural analysis OR from NRCS soil survey
+units texture class, .11 to 0.35, .0875 to 0.15 union, 0.075 - .15
+swamp</td>
+</tr>
+<tr class="even">
+<td align="left">k_f_fines</td>
+<td align="left">0.90</td>
+<td align="left">g/g</td>
+<td align="left">silt + clay, fine sediment fraction of incoming total
+suspended solids used for particle setting velocity</td>
+<td align="left">fit to field data and 0.627 - .84 prindle, 0.84 - 0.97
+union, 0.75 - 0.985 swamp rd.</td>
+</tr>
+<tr class="odd">
+<td align="left">k_f_OSS</td>
+<td align="left">0.5</td>
+<td align="left">g/g</td>
+<td align="left">organic matter fraction of incoming total suspended
+solids</td>
+<td align="left">fit to field data, %65 at prindle rd, 23% at union st,
+54% swamp rd.</td>
+</tr>
+<tr class="even">
+<td align="left">k_f_SRP</td>
+<td align="left">0.3</td>
+<td align="left">g SRP /g TP</td>
+<td align="left">fraction of TP as SRP in influent water</td>
+<td align="left">based on field data 0.404 at prindle, 0.25 at union,
+0.27 at swamp rd.</td>
+</tr>
+<tr class="odd">
+<td align="left">k_DIP_E</td>
+<td align="left">0.05</td>
+<td align="left"></td>
+<td align="left">equilibrium DIP concentration</td>
+<td align="left">used if IO_variable_DIP_E = F, set equal to final
+intact SRP for aerobic treatments</td>
+</tr>
+<tr class="even">
+<td align="left">k_rp_i</td>
+<td align="left">fn_particle_radius(sand</td>
+<td align="left"></td>
+<td align="left">average radius of inorganic particles</td>
+<td align="left">calculated based on soil texture see
+<code>fn_particle_radius</code></td>
+</tr>
+</tbody>
+</table>

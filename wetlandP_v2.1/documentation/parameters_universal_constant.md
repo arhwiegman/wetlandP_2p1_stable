@@ -1,4 +1,4 @@
-Table: parameters_universal_constant 2021-10-30_Oct101635568512
+Table: parameters_universal_constant 2023-09-27_Sep091695859403
 
 |Name   |Value        |Unit  |Description                          |Assumptions                                           |
 |:------|:------------|:-----|:------------------------------------|:-----------------------------------------------------|

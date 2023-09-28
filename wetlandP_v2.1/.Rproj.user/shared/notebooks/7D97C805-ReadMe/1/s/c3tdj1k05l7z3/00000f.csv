@@ -1,0 +1,30 @@
+"0","x <- """
+"0","Symbol | Units | Definition | Assumptions and Sources"
+"0","Zs | (m, NAD'83)| elevation of sediment surface  | estimated from LiDAR 0.5m DEM (VCGI), corrected with Emlid Reach RS+ RTK/GNSS survey (centimeter level accuracy)"
+"0","Hw | (m) | height of water above sediment surface | measured with HOBO MX2001 water level logger "
+"0","Zw | (m, NAD'83)| elevation of water | Hw +  Zs "
+"0","A | (m^2) | wetland surface area | interpolated from stage table as f(Hw)"
+"0","Vw | (m^3) | Water volume of wetland surface water | calculated from A and H_w "
+"0","ET | (cm/day) | Evapotranspiration rate | Calculated at daily intervals with penman monteith equation via the `Evapotranspiration` package, weather data from BURLINGTON INTERNATIONAL AIRPORT, VT US (WBAN:14742) (NOAA NCDC)   "
+"0","ip | (cm/day) | Precipitation rate | totals derived from sub-hourly weather observations from BURLINGTON INTERNATIONAL AIRPORT, VT US (WBAN:14742)(NOAA NCDC)"
+"0","Qnet | (m^3) | net surface flow | deduced from dVw, and A(ip - ET)"
+"0","Qin | (m^3/day) | Volumetric inflow rate | modeled with HydroCAD and/or solved from water balance "
+"0","Qout | (m^3/day)| Wetland discharge (outflow) rate | Modeled as a f(Hw) based on site observations  "
+"0","Qg | (m^3/day) | Groundwater discharge (negative for infiltration) | assumed = 0"
+"0","Uw |(m/s) | Wind speed | mean derived from sub-hourly data from BURLINGTON INTERNATIONAL AIRPORT, VT US (WBAN:14742) | used in evapotranspiration calculation  "
+"0","Tair | (°C) | Daily air temperature | mean derived from sub-hourly data BURLINGTON INTERNATIONAL AIRPORT, VT US (WBAN:14742) | "
+"0","TW | (°C) | Daily water average temperature | Modeled from Tair using equation from linear model fit to temperature measured with PME miniDOT. IF(Tair > 0): TW = 2.5+0.8Tair ELSE: TW = 0"
+"0",""""
+"0","read_delim(x,delim=""|"") %>% knitr::kable(caption=""Table 1. Hydroclimate variables"","
+"0","             format = ""pandoc"")"
+"2","Warning: [38;5;232mOne or more parsing issues, call `problems()` on your data frame for
+details, e.g.:
+  dat <- vroom(...)
+  problems(dat)[39m"
+"2","[1mRows: [22m[34m14[39m [1mColumns: [22m[34m4[39m"
+"2","[36m──[39m [1mColumn specification[22m [36m───────────────────────────────────────────────────[39m
+[1mDelimiter:[22m ""|""
+[31mchr[39m (4): Symbol ,  Units ,  Definition ,  Assumptions and Sources"
+"2","
+[36mℹ[39m Use `spec()` to retrieve the full column specification for this data.
+[36mℹ[39m Specify the column types or set `show_col_types = FALSE` to quiet this message."

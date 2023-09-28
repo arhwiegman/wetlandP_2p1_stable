@@ -1,0 +1,8 @@
+"0","df <- read_lines(as.character(sub_diffeqs)) %>% "
+"0","  str_subset(""="") %>% "
+"0","  str_squish() %>%"
+"0","  str_split(""="",simplify = TRUE)"
+"0","colnames(df) <- c(""Name"",""Value"")"
+"0","knitr::kable(df,"
+"0","             format = ""pandoc"","
+"0","             cap=""Differential equations for model states"")"

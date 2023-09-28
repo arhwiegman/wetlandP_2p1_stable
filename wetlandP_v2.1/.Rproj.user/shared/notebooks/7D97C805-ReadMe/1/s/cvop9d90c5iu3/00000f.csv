@@ -1,0 +1,4 @@
+"0","diagram_path <- paste0(getwd(),""/documentation/wetlandP_v2.1_Conceptual_Diagram.png"")"
+"0","knitr::opts_chunk$set(echo = FALSE)"
+"0","options(knitr.kable.NA = '')"
+"0","source(""documentation/generate_documentation_tables.R"")"

@@ -1,6 +1,6 @@
 Name,Value,Unit,Description,Assumptions
 area,1,m^2,wetland surface area,uniform flat surface
-H_b,0.1,m,height of belowground compartment (sediment column),"NA"
+H_b,0.1,m,height of belowground compartment (sediment column),NA
 k_HRT,1e3,d,hydraulic residence time of wetland surface water,"calculated by dividing total system water volume (m3) by outlfow rate (m3/d), often changes as function of system water volume"
 k_TSS,15,g/m^3,total suspended solids of inflow,"based on field data, median of observations, 3.5 at prindle, 23.8 at union st, 12.25 at swamp rd"
 k_TP,0.05,g P/m^3,TP concentration (mg P /L) in inflow,"0.071 at prindle, 0.059 at union, 0.056 at swamp"

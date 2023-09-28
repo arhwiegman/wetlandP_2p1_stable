@@ -1,0 +1,7 @@
+"0","df <- readxl::read_excel(""documentation/stoicheometry.xlsx"","
+"0","                   ""rates"","
+"0","                   range = ""A2:D12"")"
+"0","knitr::kable(df,"
+"0","             digits=4,"
+"0","             cap=""process rates (calculated as a function of forcing variables, intermediate variables and state variables)"","
+"0","             format = ""pandoc"")"

@@ -1,0 +1,246 @@
+<table>
+<caption>process flows (adding or subtracting from state
+variables)</caption>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="left">Value</th>
+<th align="left">Unit</th>
+<th align="left">Description</th>
+<th align="left">Assumptions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Q_in</td>
+<td align="left">IO_Q_in*Q_in</td>
+<td align="left">m^3/d</td>
+<td align="left">surface water lateral inflow</td>
+<td align="left">note all hydrologic should be positive magnitude
+values, they are then multiplied by 1, 0, -1 in differential
+equaitions</td>
+</tr>
+<tr class="even">
+<td align="left">Q_out</td>
+<td align="left">IO_Q_out*Q_out</td>
+<td align="left">m^3/d</td>
+<td align="left">surface water lateral outflow</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Q_ground</td>
+<td align="left">IO_Q_ground*Q_ground</td>
+<td align="left">m^3/d</td>
+<td align="left">net vertical flow from groundwater (percolation -
+infiltration)</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">Q_precip</td>
+<td align="left">IO_Q_precip*Q_precip</td>
+<td align="left">m^3/d</td>
+<td align="left">direct precipitation</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Q_ET</td>
+<td align="left">IO_Q_ET*Q_ET</td>
+<td align="left">m^3/d</td>
+<td align="left">evapotranspiration precipitation</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">assim_shootP</td>
+<td align="left">IO_assim_shootP*r_assim*BM*k_BM2P*k_f_G_shoot</td>
+<td align="left">g P/d</td>
+<td align="left">assimilation of shoot P</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">assim_rootP</td>
+<td align="left">IO_assim_rootP*r_assim*BM*k_BM2P*(1-k_f_G_shoot)</td>
+<td align="left">g P/d</td>
+<td align="left">growth of root P</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">mort_shootP2litterP</td>
+<td align="left">IO_mort_shootP2litterP*r_mort_shoot*shootP</td>
+<td align="left">g P/d</td>
+<td align="left">growth of root P</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">mort_rootP2LOP</td>
+<td
+align="left">IO_mort_rootP2LOP*r_mort_root*rootP*(k_f_labile_root)</td>
+<td align="left">g P/d</td>
+<td align="left">mortality of shoot P to LOP</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">mort_rootP2ROP</td>
+<td
+align="left">IO_mort_rootP2ROP*r_mort_root*rootP*(1-k_f_labile_root)</td>
+<td align="left">g P/d</td>
+<td align="left">mortatlity of root P</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">sed_IM</td>
+<td align="left">IO_sed_IM*r_sed_IM*IM_a</td>
+<td align="left">g d.w./d</td>
+<td align="left">sedimentation of inorganic matter</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">sed_PIP</td>
+<td align="left">IO_sed_IM*r_sed_IM*PIP_a</td>
+<td align="left">g P/d</td>
+<td align="left">sedimentation of inorganic P</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">sed_LOP</td>
+<td align="left">IO_sed_OM*r_sed_OM*LOP_a</td>
+<td align="left">g P/d</td>
+<td align="left">sedimentation of labile organic P</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">sed_ROP</td>
+<td align="left">IO_sed_OM*r_sed_OM*ROP_a</td>
+<td align="left">g P/d</td>
+<td align="left">sedimentation of refractory organic P</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">dec_litter2LOP_a</td>
+<td
+align="left">IO_decay_litter*r_decay_litter*litterP*(k_f_labile_litter)</td>
+<td align="left"></td>
+<td align="left">decomposition of litter P to labile organic P</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">dec_litter2ROP_a</td>
+<td
+align="left">IO_decay_litter*r_decay_litter*litterP*(1-k_f_labile_litter)</td>
+<td align="left"></td>
+<td align="left">decomposition of litter P to refractory organic P</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">dec_LOP_a</td>
+<td align="left">IO_decay_LOP*r_decay_LOP*LOP_a</td>
+<td align="left">g P/d</td>
+<td align="left">decomposition of labile OP to DIP</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">dec_ROP_a</td>
+<td align="left">IO_decay_ROP*r_decay_ROP*ROP_a</td>
+<td align="left">g P/d</td>
+<td align="left">decomposition of refractory OP to labile OP</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">dec_LOP_b</td>
+<td align="left">IO_decay_LOP*r_decay_LOP*LOP_b</td>
+<td align="left">g P/d</td>
+<td align="left">decomposition of labile OP to DIP</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">dec_ROP_b</td>
+<td align="left">IO_decay_ROP*r_decay_ROP*ROP_b</td>
+<td align="left">g P/d</td>
+<td align="left">decomposition of refractory OP to labile OP</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">diff_DIP_b2a</td>
+<td align="left">IO_diffus*r_diffus*DIP_b</td>
+<td align="left">g P/d</td>
+<td align="left">diffusion of DIP from b to a</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">sorp_DIP2PIP_b</td>
+<td align="left">IO_adsorp*r_adsorp*V_w_b</td>
+<td align="left">g P/d</td>
+<td align="left">adsorption of DIP onto PIP</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">in_IM</td>
+<td align="left">IO_in_IM*Q_in*ISS</td>
+<td align="left">g d.w./d</td>
+<td align="left">inflow of inorganic matter as ISS</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">in_PIP</td>
+<td align="left">IO_in_PIP*(in_IM*k_ISS2P + Q_in*SRP*k_SRP2PIP)</td>
+<td align="left">g P/d</td>
+<td align="left">inflow of PIP</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">in_LOP</td>
+<td align="left">IO_in_LOP*Q_in*OSS*k_BM2P*(k_f_labile)</td>
+<td align="left">g P/d</td>
+<td align="left">inflow of labile organic P</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">in_ROP</td>
+<td align="left">IO_in_ROP*Q_in*OSS*k_BM2P*(1-k_f_labile)</td>
+<td align="left">g P/d</td>
+<td align="left">inflow of recalcitrant organic P</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">in_DIP</td>
+<td align="left">IO_in_DIP*Q_in*SRP</td>
+<td align="left">g P/d</td>
+<td align="left">inflow of dissolved inorganic P</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">out_IM</td>
+<td align="left">IO_out_IM*Q_out*IM_a/V_w_a</td>
+<td align="left">g P/d</td>
+<td align="left">outflow of IM</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">out_PIP</td>
+<td align="left">IO_out_PIP*Q_out*PIP_a/V_w_a</td>
+<td align="left">g P/d</td>
+<td align="left">outflow of PIP</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">out_LOP</td>
+<td align="left">IO_out_LOP*Q_out*LOP_a/V_w_a</td>
+<td align="left">g P/d</td>
+<td align="left">outflow of LOP</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">out_ROP</td>
+<td align="left">IO_out_ROP*Q_out*ROP_a/V_w_a</td>
+<td align="left">g P/d</td>
+<td align="left">outflow of ROP</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">out_DIP</td>
+<td align="left">IO_out_DIP*Q_out*DIP_a/V_w_a</td>
+<td align="left">g P/d</td>
+<td align="left">outflow of DIP</td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>

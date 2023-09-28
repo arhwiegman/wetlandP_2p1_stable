@@ -1,0 +1,87 @@
+<table>
+<caption>process rates (calculated as a function of forcing variables,
+intermediate variables and state variables)</caption>
+<thead>
+<tr class="header">
+<th align="left">name</th>
+<th align="left">unit</th>
+<th align="left">description</th>
+<th align="left">assumptions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">r_assim</td>
+<td align="left">g P/d</td>
+<td align="left">amount of DIP_b P (g) assimilated by macrophyte plants
+as net primary productivity</td>
+<td align="left">always affected by temperature, DIP availability, and
+optionally affected by water level, and self-crowding or shading (Marois
+&amp; Mitsch 2016; Morris et al. 2002; Wiegman et al. 2019)</td>
+</tr>
+<tr class="even">
+<td align="left">r_decay_litter</td>
+<td align="left">1/d</td>
+<td align="left">proportional rate of litter decomposition</td>
+<td align="left">affected by temperature (Wang et al. 2003)</td>
+</tr>
+<tr class="odd">
+<td align="left">r_decay_ROP</td>
+<td align="left">1/d</td>
+<td align="left">proportional rate of ROP decomposition</td>
+<td align="left">same as r_decay_litter</td>
+</tr>
+<tr class="even">
+<td align="left">r_decay_LOP</td>
+<td align="left">1/d</td>
+<td align="left">proportional rate of LOP decomposition</td>
+<td align="left">same as r_decay_litter</td>
+</tr>
+<tr class="odd">
+<td align="left">r_mort_shoot</td>
+<td align="left">1/d</td>
+<td align="left">proportional rate of shoot death</td>
+<td align="left">affected by temperature, increases as a step function
+when temp drops below threshold (based on field observations) (Wiegman
+et al. 2019)</td>
+</tr>
+<tr class="even">
+<td align="left">r_mort_root</td>
+<td align="left">1/d</td>
+<td align="left">proportional rate of root death</td>
+<td align="left">affected by temperature (Morris et al. 2002)</td>
+</tr>
+<tr class="odd">
+<td align="left">r_adsorp_b</td>
+<td align="left">g P/d</td>
+<td align="left">ammount of DIP adsorbed to PIP belowground</td>
+<td align="left">affected by temperature and equilibrium DIP (Wang et
+al. 2003); equilibrium DIP can be set as a parameter, or calculated as a
+function from maximum P storage capacity (Ex_max, variable or constant),
+and the currently adsorbed P (Ex = PIP_b).</td>
+</tr>
+<tr class="even">
+<td align="left">r_diffus</td>
+<td align="left">g P/d</td>
+<td align="left">amount of diffusion of DIP_b to DIP_a</td>
+<td align="left">affected by temperature, viscosity of water,
+concentration gradient, distance, and tortuosity of fluid matrix (Wang
+et al. 2003; Reddy &amp; Delaune 2008)</td>
+</tr>
+<tr class="odd">
+<td align="left">r_sed_IM</td>
+<td align="left">1/d</td>
+<td align="left">proportional rate of sedimentation of IM_a to IM_b</td>
+<td align="left">affected by settling velocity (temperature, viscosity
+of water, particle radius, particle density) and water depth, set equal
+to 1 when depth is less than settling velocity (Reddy &amp; Delaune
+2008)</td>
+</tr>
+<tr class="even">
+<td align="left">r_sed_OM</td>
+<td align="left">1/d</td>
+<td align="left">proportional rate of sedimentation of OM_a to OM_b</td>
+<td align="left">same as r_sed_OM</td>
+</tr>
+</tbody>
+</table>
