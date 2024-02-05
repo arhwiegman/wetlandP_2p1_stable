@@ -1,0 +1,2 @@
+"0","hydrol_sub_path <- paste0(getwd(),""/documentation/hydrology_subroutine.png"")"
+"0","knitr::opts_chunk$set(echo = FALSE)"

@@ -1,0 +1,70 @@
+---
+title: "PrindleRd_HydroCAD"
+author: "Adrian Wiegman"
+date: "8/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message= FALSE)
+dependancies <- c("tidyverse",
+                  "zoo", # time series functions
+                  "broom", # applying functions to nested data
+                  "evapotranspiration", # evapotranspiration modeling
+                  "lubridate", # easy date formatting
+                  "forecast", # time series functions
+                  "cowplot", # to make nice figure pannels
+                  "patchwork", # to make nice figure pannels
+                  "scales", # to access break formatting functions
+                  "akima", # for interpolation of matrixes
+                  "rgl") # for plotting 3d matrixes
+lapply(dependancies,require,character.only=T)
+```
+
+```{r}
+require(stringr)
+# Load data
+parent <- dirname(getwd())
+path <- paste0(parent,"/lcbp/")
+datafiles <- list.files(path) %>%
+  str_extract(".*\\.Rdata")%>% na.omit %>% paste0(path,.)
+for(file in datafiles){
+  load(file)
+}
+#
+# processed hobo data
+load("C:\\Users\\Admin\\OneDrive - University of Vermont\\LCBP-wetlandP\\Data\\Water\\HOBO\\df.hobo.data_processed_nested.Rdata")
+save(df.hobo.data_processed,file="C:\\Users\\Admin\\OneDrive - University of Vermont\\LCBP-wetlandP\\Data\\Water\\HOBO\\df.hobo.data_processed.Rdata")
+```
+
+|variable | description |units |
+|---------|------------------------|-----|
+|datetime | |(yyyy/mm/dd hh:mm:ss)|
+|dH       | height of water between sensors as estimated by barometric pressure |(meters) |
+|dH_baro_correct | dH corrected for errors in abovewater barometric pressure sensor | (meters) |
+|WL_Correction_m | an adjustmet term to get WL referenced to the proper benchmark |(meters) | (meters)|
+|WL_rB | water level relative to a benchmark | (meters)|
+|Z_bottom | elevation of the channel bottom | meters|
+|Z_wl_sensor | elevation of the sensor | meters |
+
+
+### Water level data at Lewis Creek
+```{r}
+df.hobo.data_processed_nested %>% filter(site=="LC",plot!="4")
+
+Z_bottom = 112.40 # estimated from 2017 lidar
+Z_wl_sensor = 112.51 # estimated from 2017 lidar
+H_adjust_m = Z_wl_sensor - Z_bottom
+
+df.LC <- df.hobo.data_processed %>% filter(site=="LC",datetime<"2021-05-15") %>% select(datetime,plot,tempC,dH,dH_baro_correct,WL_Correction_m,WL_rB = WL_rsoil) %>% 
+  mutate(dH_baro_temp_correct=ifelse(tempC<2,NA,dH_baro_correct)) %>%
+  mutate(WL_rbottom = ifelse(plot=="low",WL_rB + 112.51 - 112.40,WL_rB))
+
+ggplot(df.LC,aes(x=datetime))+
+  #geom_line(aes(y=dH))+
+  geom_line(aes(y=dH_baro_temp_correct),linetype="dashed")+
+  facet_wrap(vars(plot),ncol=1)
+```
+

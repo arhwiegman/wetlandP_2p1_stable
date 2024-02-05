@@ -1,0 +1,187 @@
+# **************************************************************
+# filename: climate_preprocessing.R
+# description: preprocesses climate data from NOAA NCDC weather stations
+# author: adrian wiegman 
+# revision date:  2021-02-11
+# project: LCBP wetland P 
+# repository: https://github.com/arhwiegman/___    
+# notes:
+# - R is prone to crashing when nesting and unnesting data
+# - ___
+# **************************************************************
+
+
+# setup --------------------------
+# 2021-02-11
+
+rm(list=ls()) # clear environment
+library(tidyverse)
+library(lubridate)
+library(readxl)
+library(zoo)
+library(forecast)
+parent <- "C:\\Users\\Admin\\OneDrive - University of Vermont\\LCBP-wetlandP\\Data"
+sub <- "Climate"
+folder <- "NOAA_NCDC"
+file <- "2429535.csv"
+path <- paste(parent,sub,folder,file,sep="\\")
+
+
+
+# wrangle data --------------------------
+# 2021-02-11
+
+df.climate.full <- read_csv(path) %>%
+  # data formats
+  mutate(STATION=as.factor(STATION)) %>%
+  mutate_at(vars(starts_with(c("Hourly","Daily","Monthly"))),as.numeric) %>%
+  
+  # merge report type columns
+  mutate(REPORT_TYPE=case_when(
+    str_detect(REPORT_TYPE_1,"^FM.*") ~ REPORT_TYPE_1,
+    str_detect(REPORT_TYPE_1,"^SOD.*")~ REPORT_TYPE_1,
+    str_detect(REPORT_TYPE_1,"^SOM.*")~ REPORT_TYPE_1,
+    TRUE ~ REPORT_TYPE)) %>%
+  mutate(report_dt=case_when(
+    str_detect(REPORT_TYPE_1,"^SOD.*")~"day",
+    str_detect(REPORT_TYPE_1,"^SOM.*")~"month",
+    str_detect(REPORT_TYPE_1,"^FM.*")~"hr",
+  )) %>%
+  
+  # reclassify cloud cover
+  mutate(cloud=case_when( 
+    str_detect(HourlySkyConditions,"CLR")~0,
+    str_detect(HourlySkyConditions,"FEW")~.2,
+    str_detect(HourlySkyConditions,"SCT")~.4,
+    str_detect(HourlySkyConditions,"BKN")~.7,
+    str_detect(HourlySkyConditions,"OVC")~.8,
+    T~1
+  )) %>%
+  
+  # format dates and times
+  mutate(datetime = DATE %>%
+           str_replace_all("T"," ") %>%
+           strptime("%Y-%m-%d %H:%M:%S") %>%
+           as.POSIXct()) %>% 
+  rename(stringDATE = DATE) %>%
+  mutate(date=date(datetime)) %>%
+  mutate(time = as.numeric(format(datetime, "%H")) +
+           as.numeric(format(datetime, "%M"))/60) %>%
+  
+  # classify stations by city
+  mutate(city=case_when(
+    STATION=="72617014742"~"Burlington",
+    STATION=="99999900425"~"Middlebury",
+    TRUE~"Rutland")) %>%
+  
+  # convert sunrise and sunset to decimal hour
+  separate(Sunrise,c("hr.rise","min.rise"),sep=2) %>%
+  separate(Sunset,c("hr.set","min.set"),sep=2) %>%
+  mutate(Sunrise = as.numeric(hr.rise)+as.numeric(min.rise)/60,
+         Sunset = as.numeric(hr.set)+as.numeric(min.set)/60)
+
+# put sunrise and sunset at hourly data 
+df.climate.sub <- df.climate.full %>%
+  select(city,report_dt,datetime,date,time,contains(c("DryBulb","Humid","WindSpeed","Precip","Pressure","Snow")),-starts_with("ShortDura")) %>%
+  full_join(df.climate.full %>% select(city,date,Sunrise,Sunset) %>% filter(!is.na(Sunrise)))
+
+
+
+# interpolate missing values --------------------------
+# 2021-02-11
+
+# NEST DATA AND FILL MISSNING VALUES WITH LINEAR INTERPOLATION
+df.climate.approx.nested <- df.climate.sub %>% 
+  group_by(city,report_dt) %>% 
+  arrange(datetime) %>%
+  nest() %>%
+  
+  # hourly data
+  mutate(data.hr.approx = map(data,
+                           function(x){
+                             x %>% 
+                               mutate(datetime=as.numeric(datetime))%>%
+                               select(-starts_with("Daily"),
+                                      -starts_with("Month")) %>%
+                               select_if(is.numeric) %>%
+                               zoo %>%
+                               na.approx(na.rm=FALSE) %>%
+                               fortify.zoo %>%
+                               mutate(datetime=as.POSIXct(datetime,
+                                                          origin="1970-01-01"))
+                             } 
+                           )
+         ) %>%
+  
+  # daily data
+  mutate(data.day.approx = map(data,
+                              function(x){
+                                x %>% 
+                                  mutate(datetime=as.numeric(datetime))%>%
+                                  select(-starts_with("Hourly"),
+                                         -starts_with("Month")) %>%
+                                  select_if(is.numeric) %>%
+                                  zoo %>%
+                                  na.approx(na.rm=FALSE) %>%
+                                  fortify.zoo %>%
+                                  mutate(datetime=as.POSIXct(datetime,
+                                                             origin="1970-01-01"))
+                                }
+                             )
+         ) %>%
+  
+  # monthly data
+  mutate(data.month.approx = map(data,
+                               function(x){
+                                 x %>% 
+                                   mutate(datetime=as.numeric(datetime))%>%
+                                   select(-starts_with("Hourly"),
+                                          -starts_with("Daily")) %>%
+                                   select_if(is.numeric) %>%
+                                   zoo %>%
+                                   na.approx(na.rm=FALSE) %>%
+                                   fortify.zoo %>%
+                                   mutate(datetime=as.POSIXct(datetime,
+                                                              origin="1970-01-01"))
+                                 } 
+                               )
+         ) %>%
+		 
+    mutate(data2 = map(data,
+                                 function(x){
+                                   x %>% 
+                                     select(-starts_with("Hourly"),
+                                            -starts_with("Daily"),
+                                            -starts_with("Monthly")) %>%
+                                     select_if(!is.numeric)
+                                 } 
+  )
+
+df.climate.approx = df.climate.approx.nested %>% 
+  select(-data) %>%
+  unnest(data2,data.month.approx,data.day.approx,data.hr.approx)
+
+
+head(df.climate.approx.nested))
+# calculate day length and sunshine hours from cloud cover
+mutate(daytime = ifelse(Sunrise<time & time>Sunset,1,0)) %>%
+  mutate(sunshine = Daytime * (1 - cloud))
+
+
+
+
+# subset --------------------------
+# 2021-02-11
+
+# hourly observations
+df.climate.hour <- df.climate.sub %>% 
+  filter(str_detect(report_dt,"hr")) %>%
+  select(-starts_with("Month"),
+         -starts_with("Daily")) %>%
+  
+
+# daily summary
+df.climate.day <- df.climate.sub %>%
+  filter(str_detect(report_dt,"day")) %>%
+  select(-starts_with("Monthly"),
+         -starts_with("Hourly"))

@@ -1,0 +1,594 @@
+# SET PARAMETERS ###################################################
+rm(list=ls()) # clear environment
+makeplots <- F # true or false
+
+# LOAD PACKAGES ######################
+library(tidyverse)
+library(lubridate)
+library(readxl)
+
+# DEFINE FUNCTIONS AND CODE BLOCKS #################################
+# code block "expression" to make plots 
+e_make_plots <- expression({
+  
+  # EXAMINE RECORD of Barometric Pressure
+  d %>% 
+    ggplot(aes(x=datetime,y=baro.Pa,color=HOBO_name))+
+    facet_grid(vars(site))+
+    geom_line()+
+    scale_y_log10()
+  ggsave("figures/hobo_preprocessing_0.pdf",height=8,width=11)
+  
+  # EXAMINE CORRELATION BETWEEN BAROMETRIC PRESSURE
+  # ocd hi
+  df.filt %>% 
+    ggplot(aes(baro.Pa.ocd_hi,baro.Pa,color=datetime))+
+    facet_wrap(vars(HOBO_name))+
+    geom_line()+
+    geom_smooth(method="lm")+
+    geom_abline(aes(slope=1,intercept=0))
+  ggsave("figures/hobo_preprocessing_1.pdf",height=8,width=11)
+  # lc low
+  df.filt %>% 
+    ggplot(aes(baro.Pa.lc_low,baro.Pa,color=datetime))+
+    facet_wrap(vars(HOBO_name))+
+    geom_line()+
+    geom_smooth(method="lm")+
+    geom_abline(aes(slope=1,intercept=0))
+  ggsave("figures/hobo_preprocessing_2.pdf",height=8,width=11)
+  
+  # EXAMINE MODEL FIT 
+  pdf("figures/hobo_preprocessing_ols_diagnostics.pdf",paper="a4r")
+  m %>% olsrr::ols_plot_diagnostics()
+  dev.off()
+  
+  # PLOT DIFFERENCE IN OBSERVED AND PREDICTED BAROMETRIC PRESURE
+  df.pred %>% 
+    ggplot(aes(datetime,diff_baro.Pa,color=datetime))+
+    facet_wrap(vars(HOBO_name))+
+    geom_line()+
+    geom_smooth(method="lm")+
+    geom_abline(aes(slope=0,intercept=0))
+  ggsave("figures/hobo_preprocessing_3.pdf",height=8,width=11)
+  
+  # EXAMINE DIFFERENCE IN OBSERVED vs PREDICTED dH based on model of Barometric Pressure
+  df.pred %>% 
+    ggplot(aes(x=datetime,y=diff_dH,color=HOBO_name))+
+    geom_line()+
+    scale_y_log10()
+  ggsave("figures/hobo_preprocessing_4.pdf",height=8,width=11)
+  
+  # EXAMINE OBSERVED AND PREDICTED dH
+  df.pred %>% 
+    filter(datetime>"2019-10-15"&datetime<"2019-11-15") %>%
+    ggplot()+
+    facet_grid(vars(site))+
+    geom_line(aes(x=datetime,y=dH,color=HOBO_name))+
+    geom_line(aes(x=datetime,y=dH.pred,color=HOBO_name),linetype="dotdash")
+  ggsave("figures/hobo_preprocessing_5.pdf",height=8,width=11)
+  
+  df.pred %>% 
+    filter(datetime>"2020-12-15"&datetime<"2021-01-15") %>%
+    ggplot()+
+    facet_grid(vars(site))+
+    geom_line(aes(x=datetime,y=dH,color=HOBO_name))+
+    geom_line(aes(x=datetime,y=dH.pred,color=HOBO_name),linetype="dotdash")
+  ggsave("figures/hobo_preprocessing_6.pdf",height=8,width=11)
+  
+  
+  df.pred %>% 
+    filter(datetime>"2021-04-01"&datetime<"2021-05-01") %>%
+    ggplot()+
+    facet_grid(vars(site))+
+    geom_line(aes(x=datetime,y=dH,color=HOBO_name))+
+    geom_line(aes(x=datetime,y=dH.pred,color=HOBO_name),linetype="dotdash")
+  ggsave("figures/hobo_preprocessing_7.pdf",height=8,width=11)
+  
+  df.hobo.data_processed %>% 
+    ggplot()+
+    facet_grid(vars(site))+
+    geom_line(aes(x=datetime,y=dH,color=HOBO_name))+
+    geom_line(aes(x=datetime,y=dH.pred,color=HOBO_name),linetype="dotdash")
+  ggsave("figures/hobo_preprocessing_8.pdf",height=8,width=11)
+  
+  df.hobo.data_processed %>% 
+    ggplot()+
+    facet_grid(vars(site))+
+    geom_line(aes(x=datetime,y=Zw,color=HOBO_name))
+  ggsave("figures/hobo_preprocessing_9.pdf",height=8,width=11)
+})
+
+# code block to read in and concatenate hobo data files
+e_load_concat_hobo_data <- expression({
+  library(tidyverse)
+  library(readxl)
+  library(data.table)
+  # Update readout logs
+  getwd()
+  path <- "C:\\Users\\Admin\\OneDrive - University of Vermont\\LCBP-wetlandP\\Data\\Water\\HOBO\\"
+  path1 <- paste0(path,"Readouts\\")
+  filenames <- dir(paste0(path,"Readouts"))
+  filenames <- stringr::str_extract(filenames,"^.*.xlsx") %>% na.omit()
+  df <- data.frame("Filename" = filenames)
+  info <- vector("list",length(filenames))
+  data <- vector("list",length(filenames))
+  
+  # Collect information on Hobo deployments and summarized in dataframe
+  i=0
+  for(f in filenames){
+    i = i + 1
+    p <- paste0(path1,f)
+    info[[i]] <- read_xlsx(p,
+                           sheet="Details",
+                           range="C11:D36",
+                           col_names=c("name","value")) %>% filter(!is.na(name)) %>%
+      pivot_wider(names_from = name, values_from = value) %>% as.data.frame()
+    info[[i]]$Filename <- f
+    data[[i]] <- read_xlsx(p,sheet="DATA",
+                           skip=2,
+                           col_names=c("n",
+                                       "Date Time, GMT -0400",
+                                       "Diff Press, psi",
+                                       "Abs Press, psi",
+                                       "Temp, degF",
+                                       "Water Level, ft",
+                                       "Baro Press, psi")) %>% 
+      mutate(Filename=f)
+  }
+  
+  
+  
+  # Consolidate info and data into dataframes using data.table package
+  df.hobo.data <- rbindlist(data)
+  
+  # Create site and plot names for hobos
+  df.hobo.info <- data.table::rbindlist(info) %>% 
+    mutate(
+      site_plot = case_when(
+        Name == "2" ~ "LC.low",
+        Name == "3" ~ "OCD.WL3", 
+        Name == "lc 4" ~ "LC.4",
+        Name == "LC IN E" ~ "LC.IN E",
+        Name == "LC IN E.1" ~ "LC.IN E",
+        Name == "lc low" ~ "LC.low",
+        Name == "LC OUT" ~ "LC.OUT WL",
+        Name == "LC OUT.2" ~ "LC.OUT WL",
+        Name == "OCD HI" ~ "OCD.hi",
+        Name == "ocd low" ~ "OCD.0",
+        Name == "ocsp-1" ~ "OCSP.WL1",
+        Name == "ocsp low above sed" ~ "OCSP.0",
+        Name == "oscp hi" ~ "OCSP.4",
+        Name == "oscp low" ~ "OCSP.0", 
+        Name == "oscp low sed surface" ~ "OCSP.0",
+        T ~ Name)
+    ) %>% 
+    rename(HOBO_name = Name) %>%
+    separate(site_plot,into=c("site","plot"),sep="\\.") %>%
+    left_join(df.geospatial_LCBP)
+    
+  
+  # Obtain first and last waterlevel observation and add to hobo.info
+  . <- df.hobo.data %>% 
+    group_by(Filename) %>% 
+    summarise(First_WL=first(`Water Level, ft`),
+              Last_WL=last(`Water Level, ft`))
+  df.hobo.info <- inner_join(df.hobo.info,.)
+  
+  # Filter out files containing partial deployments
+  df.hobo.info <- df.hobo.info %>%
+    group_by(HOBO_name,
+             `First Sample Time`) %>%
+    filter(Samples == max(as.numeric(Samples))) %>%
+    # creates bug in adjustment spreadsheet
+    arrange(site,plot,`First Sample Time`,`Last Sample Time`)
+  #arrange(site,plot,`First Sample Time`,`Last Sample Time`)
+  # merge hobo.info with hobo.data for selected Filenames
+  df.hobo.joined <- inner_join(df.hobo.info,
+                               df.hobo.data,
+                               by="Filename")
+  
+  # 1. Correct water levels from deployments
+  # - Manually edit the water levels between deployments
+  # - Correct water level of each deployment based on the difference between the most recent deployment
+  # - Import table of WL corrections
+  df.hobo.corrections <- read_csv(paste0(path,"HOBO_info_adjusted.csv"))
+  df.hobo.corrections$WL_Correction <- as.numeric(df.hobo.corrections$WL_Correction)
+  df.hobo.info_corrections <- inner_join(df.hobo.info,df.hobo.corrections%>% select(Filename,WL_Correction,H_soil_to_sensor))
+  
+})
+
+# function to predict model 
+f_pred_m <- function(x1,x2,x3,m){
+  # function to predict y with model object and x vars 
+  # based on the formula 
+  # y~x1:x2+x1:x3
+  # m - is a model object of class lm
+  # x1 - is the value of the first x variable, which is a factor
+  # x2 - is the value of the second variable, which is numeric
+  # x3 - is the value of the third variable, which is numeric
+  vars <- names(m$model)
+  b0 = m$coefficients["(Intercept)"]
+  b12 = m$coefficients[paste0(vars[2],x1,":",vars[3])]
+  #print(b12)
+  b13 = m$coefficients[paste0(vars[2],x1,":",vars[4])]
+  #print(b13)
+  y = b0+b12*x2+b13*x3
+  return(as.numeric(y))
+}
+
+# function to convert pressure difference to height difference using pascal's law
+f_pascal_dP_to_dH <- function(dP,tempC,rho_S=1000,g=9.806,beta=0.0002,tempC_S=20){
+  # Pascal's Law:
+  # dP = dH * rho * g
+  # dP/(rho*g) = dH
+  # where
+  # rho - the temperature adjusted density of water
+  # dH - vertical distance between points
+  # dP - difference in pressure between two vertical points 
+  # g - gravitational acceleration (m/s^2) = 9.806 at sea level
+  # beta - thermal expansion coefficient of freshwater 0.0002
+  # rho_S - density of fluid (kg/m^3) = 1000 for freshwater at standard temp and pressure
+  # TdC - temperature in celcius
+  # TC_S - standard temperature is 20 degrees C
+  rho = rho_S/(1+beta*(tempC-tempC_S))
+  dH = dP/(rho*g)
+  return(dH)
+}
+
+
+# READ IN DATA #######################################
+df.geospatial_LCBP <-read_csv("C:/Workspace/LCBP-wetlandP-geospatial/Bathymetry/Bathymetry/df_LCBP_geospatial_TableToExcel.csv")
+
+eval(e_load_concat_hobo_data)
+
+# PROCESS DATA #####################################
+
+# calculate raw values based on barometric pressure
+d <- df.hobo.joined %>% 
+  # select important variables
+  rename(
+    datetime=`Date Time, GMT -0400`,
+    tempF = `Temp, degF`,
+    abs.psi =`Abs Press, psi`,
+    baro.psi =`Baro Press, psi`) %>%
+  # convert to SI units and calculate water depth from pressure difference
+  mutate(
+    tempC = (tempF - 32)/1.8,
+    abs.Pa = abs.psi * 6894.76,
+    baro.Pa = baro.psi * 6894.76,
+    dP = (abs.Pa - baro.Pa), # 6894.76 Pa is 1 psi 
+    dH = f_pascal_dP_to_dH(dP,tempC)
+    ) %>% 
+  # include only distinct values
+  distinct %>%
+  # sort by datetime
+  arrange(datetime)
+
+# create an approximation function for ocd high barometric pressure
+df.ocd_hi <- d %>% 
+  filter(site=="OCD",
+  plot=="hi"|plot=="WL3")
+x=df.ocd_hi$datetime
+y=df.ocd_hi$baro.Pa
+f_ocd_hi_baro <- approxfun(x,y,na.rm=FALSE)
+
+# create an approximation function for lc low baro
+df.lc_low <- d %>% 
+  filter(site=="LC",plot=="low")
+x=df.lc_low$datetime
+y=df.lc_low$baro.Pa
+f_lc_low_baro <- approxfun(x,y,na.rm=FALSE)
+
+
+# Create new dataframe with barometric pressure for ocd hi and lc low interpolated at each timepoint
+df <- d %>% 
+  #filter(site=="OCD"|site=="OCSP") %>%
+  mutate(baro.Pa.ocd_hi = f_ocd_hi_baro(datetime),
+         baro.Pa.lc_low = f_lc_low_baro(datetime))
+
+# find periods of time where baro.Pa is behaving normally for all HOBOs
+# (probe is not submerged)
+df.filt <- df %>% 
+filter((datetime<"2019-10-15" & HOBO_name!="LC IN E")|
+         (datetime<"2020-08-25" & datetime>"2020-08-15"))
+# fit predictive model to barometric pressure at ocd hi or lc low to other HOBOs
+m <- lm(baro.Pa~HOBO_name:baro.Pa.ocd_hi+HOBO_name:baro.Pa.lc_low,data=df.filt)
+m %>% summary
+m$model %>% names
+f_pred_m(x1="3",
+         x2=10000,
+         x3=99999,
+         m=m)
+
+df.pred <- df %>% 
+  # calculate predicted barometric pressure based on pressure at ocd hi and lc low
+  mutate(baro.Pa.pred = f_pred_m(x1=HOBO_name,
+                                 x2=baro.Pa.ocd_hi,
+                                 x3=baro.Pa.lc_low,
+                                 m=m),
+         dP.pred = abs.Pa - baro.Pa.pred,
+         dH.pred = f_pascal_dP_to_dH(dP.pred,tempC),
+         diff_baro.Pa=baro.Pa-baro.Pa.pred,
+         diff_dP=sqrt((dP - dP.pred)^2),
+         diff_dH=sqrt((dH - dH.pred)^2)) %>%
+  # calculate atmospheric dissolved oxygen 
+  mutate(
+    DOsat = 
+      # LakeMetabolizer::o2.at.sat.base(
+      # baro=baro.Pa.pred/1000, # 1 Pa to 1000 kpa and 1kpa to 10  millibars
+      # salinity = 0,
+      # model = "garcia-benson",
+      # temp = tempC)
+      rMR::Eq.Ox.conc(temp.C=tempC, elevation.m = NULL, 
+           bar.press = baro.Pa.pred/1000, bar.units = "kpa", 
+           out.DO.meas = "mg/L", 
+           salinity = 0,salinity.units="pp.thou"))
+
+########
+df.hobo.data_processed <- df.pred %>% 
+  ungroup %>%
+  left_join(df.hobo.info_corrections) %>%
+  distinct %>%
+  mutate(H_soil_to_sensor = case_when(
+           HOBO_name == "ocd low" ~ case_when(
+             #datetime > "2020-07-13"~1.8, # removing this for now 2021-07-20
+             datetime > "2020-07-13"~1.6, # removing this for now 2021-07-20
+             datetime < "2020-07-30"~1.57,
+             datetime < "2020-04-13"~1.33,
+             T~1.13),
+           HOBO_name == "3"~.5,
+           HOBO_name == "oscp low" ~ 4.541 - (0.1)*3.2804,
+           HOBO_name == "oscp low sed surface"~ 
+             ifelse(str_detect(Filename,".*2020-07-30.*$"),
+                               0,
+                               4.541),
+           HOBO_name == "lc 4"~ 1.3125 - 0.333,
+           HOBO_name == "lc low"~0.4375 - 0.333,
+           HOBO_name == "2"~0.4375 - 0.333, # adding 0.33 2021-07-20
+           T~0)) %>%
+    #ifelse(datetime > "2020-04-13" & 
+    #                            datetime < "2020-07-30",1.33,2.0416),
+  mutate(WL_Correction_m = 0,
+         WL_Correction_m = 12*2.54*(H_soil_to_sensor)/100,
+         WL_Correction_m = case_when(
+           plot=="IN E"&`Deployment Number`==2~
+             WL_Correction_m+0.32,
+           plot=="low"~WL_Correction_m-(112.51 - 112.40),
+           TRUE~WL_Correction_m
+         ),
+         dH_baro_correct = case_when(
+           !is.na(dH.pred) &
+             diff_dH > 0.005 ~ dH.pred,
+           TRUE ~ dH
+         )) %>% 
+  mutate(elevation=case_when(
+    site=="OCSP" & plot=="0"~elevation_est,
+    T~elevation)) %>%
+  mutate(Zw = dH_baro_correct + elevation_est - WL_Correction_m,
+         WL_rsoil = dH_baro_correct - WL_Correction_m,
+         Vw_rsoil = WL_rsoil * 1000,
+         EWL = Zw) %>%
+  arrange(by=datetime) %>% 
+  mutate(site_plot = paste(site,plot))  
+save(df.hobo.data_processed,file="C:\\Users\\Admin\\OneDrive - University of Vermont\\LCBP-wetlandP\\Data\\Water\\HOBO\\df.hobo.data_processed.Rdata")
+
+df.hobo.data_processed_nested <- df.hobo.data_processed %>%
+  group_by_at(colnames(df.hobo.data_processed)[c(1:68,90:92)]) %>%
+  select(-n) %>%
+  nest %>%
+  ungroup %>% 
+  select (Filename,HOBO_name,site,plot,site_plot,
+          `Deployment Number`,`Serial Number`,
+          WL_Correction,H_soil_to_sensor,WL_Correction_m,
+          `Reference Water Level`,`First Sample Time`,
+          `Last Sample Time`,First_WL,Last_WL,data)
+save(df.hobo.data_processed,file="C:\\Users\\Admin\\OneDrive - University of Vermont\\LCBP-wetlandP\\Data\\Water\\HOBO\\df.hobo.data_processed_nested.Rdata")
+
+
+# MAKE PLOTS ################
+if(makeplots==F){}else{eval(e_make_plots)}
+
+# WETLAND ONLY #############
+hr_lag = 2
+#load("HOBO_processed.Rdata")
+require(zoo) # for roll apply
+require(pracma) # for movavg
+
+df.hobo.wetland <- 
+  df.hobo.data_processed_nested %>% 
+  ungroup %>% 
+  select(site,plot,data) %>%
+  unnest(data) %>%
+  arrange(datetime) %>%
+  distinct_all %>% 
+  group_by(site) %>%
+  filter(str_detect(plot,".*0$")|
+           str_detect(plot,".*low$")|
+           str_detect(plot,"WL.{1}$")) %>%
+  # remove plot and elevation so joining with water sample data is easier
+  group_by(site) %>%
+  mutate(Zw = ifelse(is.na(Zw),0,Zw)) %>%
+  mutate(ma=rollapply(Zw,hr_lag*6,mean,fill=NA)) %>%
+  mutate(Zw = ifelse(abs(ma - Zw)>0.1,ma,Zw)) %>%
+  mutate(dZw = Zw - lag(Zw)) %>% 
+  ungroup()  
+  
+df.hobo.wetland.OCD <- df.hobo.wetland %>%
+  filter(site=="OCD") %>%
+  mutate(
+    WL_r2 = Zw - ifelse(site=="OCD",77.663,75.186)) %>%
+    select(datetime,H=WL_r2)
+
+
+# MOVING AVEREAGE ################
+d <- df.hobo.wetland %>%
+  #filter(site!="LC") %>%
+  mutate(
+    WL_r2 = Zw - ifelse(site=="OCD",77.663,
+                             ifelse(site=="OCSP",75.186,83.91616)),
+    WL_r0 = Zw - ifelse(site=="OCD",77.29694,
+                           ifelse(site=="OCSP",75.09847,83.52688)),
+    pulse = ifelse(site=="OCD"|site=="OCSP",
+                   case_when(
+                     datetime>"2019-10-17"&
+                       datetime<"2019-10-28"~"'19 Fall",
+                     datetime>"2020-12-25"&
+                       datetime<"2021-01-09"~"'20/21 Winter",
+                     datetime>"2021-03-24"&
+                       datetime<"2021-04-15"~"'21 Spring",
+                     T~as.character(NA)),
+                   case_when(
+                     datetime>"2019-10-17"&
+                       datetime<"2019-10-25"~"'19 Fall",
+                     datetime>"2021-03-11"&
+                       datetime<"2021-03-16"~"'20/21 Winter",
+                     datetime>"2021-04-28"&
+                       datetime<"2021-05-03"~"'21 Spring",
+                     T~as.character(NA)))
+  ) %>%
+  mutate(LC_sample_plot = case_when(
+      "2019-09-20 12:00" < datetime & datetime <  "2020-07-15 12:00" ~ 2,
+      "2020-08-06 8:00"  < datetime & datetime <  "2021-07-12 10:00" ~ 0,
+    ),
+    WL_r = ifelse(site=="LC",ifelse(LC_sample_plot==2,WL_r2,WL_r0),WL_r2))
+                   
+    
+
+
+df.hobo.wetland.OCSP <- df.hobo.wetland %>%
+  filter(site=="OCSP") %>%
+  mutate(
+    WL_r2 = Zw - ifelse(site=="OCD",77.663,75.186)) %>%
+  select(datetime,height=WL_r2)
+filename="OCSP_water_height.csv"
+meta=c("# METADATA///",
+       "# OCSP = Otter Creek Swamps Preserve (TNC), West Salisbury VT",
+       "# datetime = date time in POSIXct format YYYY-MM-DDThh-mm-ssZ",
+       "# height = water height in meters above median soil elevation",
+       "# HOBO MX2001 water level logger, placed in floodplain",
+       "# Data corrected for local barometric pressure",
+       "# Author: Adrian Wiegman adrian.wiegman@gmail.com",
+       "# EPA Grant: LC00A00394",
+       "# DATA///",
+       "datetime,height")
+write_lines(meta,path=filename)
+#write_csv(df.hobo.wetland.OCSP,"OCSP_water_height.csv",append=T)
+save(df.hobo.wetland.OCSP,file="OCSP_water_height.Rdata")
+df.hobo.wetland.OCD <- df.hobo.wetland %>%
+  filter(site=="OCD") %>%
+  mutate(
+    WL_r2 = Zw - ifelse(site=="OCD",77.663,75.186)) %>%
+  select(datetime,height=WL_r2)
+filename="OCD_water_height.csv"
+meta=c("# METADATA///",
+       "# OCD = Otter Creek Des Marais (NRCS Easement) in Brandon VT",
+       "# datetime = date time in POSIXct format YYYY-MM-DDThh-mm-ssZ",
+       "# height = water height in meters above median soil elevation",
+       "# HOBO MX2001 water level logger placed in floodplain",
+       "# Data corrected for local barometric pressure",
+       "# Author: Adrian Wiegman adrian.wiegman@gmail.com",
+       "# EPA Grant: LC00A00394",
+       "# DATA///",
+       "datetime,height")
+write_lines(meta,path=filename)
+#write_csv(df.hobo.wetland.OCD,"OCD_water_height.csv",append=T)
+save(df.hobo.wetland.OCD,file="OCD_water_height.rData")
+
+
+hr_lag = 12 #hours
+time_increment = 10 #minutes per increment
+inc_per_hr = 60/time_increment # increments per hour
+#load("HOBO_processed.Rdata")
+require(zoo) # for roll apply
+require(pracma) # for movavg
+df.hobo.wetland_ma <- 
+  d %>% 
+  group_by(site) %>%
+  # smoothed water level using 12hr moving average
+  mutate(ma=rollapply(Zw,hr_lag*inc_per_hr,mean,fill=NA)) %>%
+  # hourly change in water level dWL/hr
+  mutate(dma = ma - lag(ma,inc_per_hr)) %>%
+  mutate(WL_r2_ma = ma - ifelse(site=="OCD",77.663,
+                                ifelse(site=="OCSP",75.186,83.91616)),
+         WL_r0_ma = ma - ifelse(site=="OCD",77.29694,
+                                ifelse(site=="OCSP",75.09847,83.52688))
+  ) %>%
+  mutate(condition=case_when(
+    dma>0~"filling",
+    dma<=0~"draining"
+  ),
+  LC_sample_plot = case_when(
+      "2019-09-20 12:00" < datetime & datetime <  "2020-07-15 12:00" ~ 2,
+      "2020-08-06 8:00"  < datetime & datetime <  "2021-07-12 10:00" ~ 0,
+    ),
+    WL_r = ifelse(site=="LC",ifelse(LC_sample_plot==2,WL_r2,WL_r0),WL_r2))
+df.hobo.wetland_ma <-df.hobo.wetland_ma %>%
+  select(-plot)
+
+### CALCULATE PERCENT TIME INUNDATED AT EACH PLOT ##############
+df.geospatial_LCBP<-read_csv("C:/Workspace/LCBP-wetlandP-geospatial/Bathymetry/Bathymetry/df_LCBP_geospatial_TableToExcel.csv")
+df.GNSS_Buffer6m_dem_zstat2_TableToExcel <- read_excel("C:/Workspace/LCBP-wetlandP-geospatial/Bathymetry/Bathymetry/GNSS_Buffer6m_dem_zstat2_TableToExcel.xlsx")
+
+# calculate percent time inundated
+df.hobo.wetland.Hw_ind <- 
+  df.GNSS_Buffer6m_dem_zstat2_TableToExcel %>% 
+  select(site_plot,MIN,MAX,MEAN,RANGE,MEAN,STD) %>% 
+  # rename_with(
+  #   .cols=-site_plot,
+  #   .fn=~paste0(.x,"_elev_6m_nad83")) %>%
+  left_join(df.geospatial_LCBP %>% 
+              select(site,plot,site_plot,
+                     elevation,lat,lon)) %>% 
+  left_join(df.hobo.wetland %>% 
+              group_by(site) %>% 
+              select(site,datetime,Zw) %>% 
+              nest()
+  ) %>% 
+  ungroup %>%
+  group_by(site_plot) %>% 
+  unnest(data) %>%
+  mutate(
+    Zw = ifelse(is.na(Zw),0,Zw), # turn NA to zero
+    # height of water above the soil
+    Hw = Zw - elevation,
+    Hw_sd_lo = Zw - (elevation - STD), 
+    Hw_sd_hi = Zw - (elevation + STD),
+    Hw_min = Zw - (elevation + (MIN-MEAN)), 
+    Hw_max = Zw - (elevation + (MAX-MEAN)),
+    # is the site inundated?
+    ind = ifelse(Hw > 0,1,0),
+    ind_sd_lo = ifelse(Hw_sd_lo > 0,1,0),
+    ind_sd_hi = ifelse(Hw_sd_hi > 0,1,0),
+    ind_min = ifelse(Hw_min > 0,1,0),
+    ind_max = ifelse(Hw_max > 0,1,0)
+  )
+
+df.hobo.wetland_summary <- 
+  df.hobo.wetland.Hw_ind %>% 
+  group_by(site,plot,site_plot,lat,lon,elevation) %>% 
+  select(starts_with("Hw"),starts_with("ind")) %>%
+  summarize_all(list(
+                 ~mean(.),
+                 P50 = ~quantile(.,probs=0.50),
+                 P75 = ~quantile(.,probs=0.75),
+                 P90 = ~quantile(.,probs=0.90),
+                 P95 = ~quantile(.,probs=0.95),
+                 P99 = ~quantile(.,probs=0.99),
+                 P99p9 = ~quantile(.,probs=0.999)
+               ),na.rm=T) %>%
+  group_by(site,plot,site_plot,lat,lon,elevation) %>% 
+  select(starts_with("ind")&!contains("P"),
+         starts_with("Hw")) %>% 
+  rename_with(
+      .cols=contains("ind"),
+      .fn=~str_remove(.x, "_mean"))
+  
+# SAVE DATA #####################
+write_csv(df.hobo.info,paste0(path,"HOBO_info.csv"))
+write_csv(df.hobo.data,paste0(path,"HOBO_data.csv"))
+write_csv(df.hobo.joined,paste0(path,"HOBO_joined.csv"))
+write_csv(df.hobo.data_processed_nested %>% unnest(data),paste0(path,"HOBO_data_processed.csv"))
+save(df.hobo.wetland ,file=paste0(getwd(),"/","df.hobo.wetland.Rdata"))
+save(df.hobo.wetland_ma ,file=paste0(getwd(),"/","df.hobo.wetland_ma.Rdata"))
+save(df.hobo.wetland_summary ,file=paste0(getwd(),"/","df.hobo.wetland_summary.Rdata"))
+  

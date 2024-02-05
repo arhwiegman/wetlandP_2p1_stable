@@ -1,0 +1,1 @@
+{"frames":[],"message":"Error in read_delim(x, delim = \"|\") %>% knitr::kable(caption = \"Table 1. Hydroclimate variables\",  : \n  could not find function \"%>%\"\n"}

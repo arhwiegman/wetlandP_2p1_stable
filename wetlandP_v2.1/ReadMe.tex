@@ -78,7 +78,7 @@
 
 \title{Documentation -- wetlandP\_v2.1}
 \author{Adrian Wiegman}
-\date{27 September, 2023}
+\date{01 November, 2023}
 
 \begin{document}
 \maketitle
@@ -87,14 +87,41 @@
 \setcounter{tocdepth}{2}
 \tableofcontents
 }
-\textbf{Note this project is still under development}
-
 \hypertarget{about}{%
 \subsection{About}\label{about}}
 
 The wetlandP\_v2.1 model is an ordinary differential equation model
-developed for decadal phosphorus (P) retention simulations in riparian
-wetlands with a range of soil and hydrologic conditions.
+developed for estimating phosphorus (P) retention in riparian wetlands
+with a range of soil and hydrologic conditions. The model is forced by
+daily hydroclimatic inputs and is designed to simulate dynamics of soil,
+water, and vegetation on time scales that range from weeks (nutrient
+uptake and release by soil and plants during a single flood event) to
+decades (gradual changes in soil properties as soil organic matter
+accumulates and gradual loss of legacy P anthropogenic sources).
+
+This repository
+(\url{https://github.com/arhwiegman/wetlandP_2p1_stable}) contains a
+stable version of the wetlandP\_v2.1 model with input data and
+simulation results related to the Lake Champlain Basin Program (LCBP)
+grant cited below.
+
+Files that have the acronyms ``lcbp'' or ``LCBP'' contain input data,
+computer code, and or model outputs relate to the LCBP grant cited
+below.
+
+The following acronyms are used for LCBP field sites:
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+ID & Site Name \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+LC & Prindle Road (Prindle brook tributary of Lewis Creek) \\
+OCSP & Otter Creek Swamp Road \\
+OCD & Otter Creek Union Street \\
+\end{longtable}
 
 \hypertarget{funding}{%
 \subsubsection{Funding}\label{funding}}
@@ -115,7 +142,7 @@ Breck Bowden, Ph.D., University of Vermont (Investigator)
 
 Kristin Underwood, Ph.D., University of Vermont (Investigator)
 
-Adrian Wiegman, M.S., University of Vermont (PhD Candidate)
+Adrian R. H. Wiegman, Ph.D., University of Vermont (Model Developer)
 
 \hypertarget{granting-agency}{%
 \paragraph{Granting Agency:}\label{granting-agency}}
@@ -126,19 +153,21 @@ Lake Champlain Basin Program
 
 Grand Isle, VT 05458
 
+\hypertarget{links}{%
+\paragraph{Links:}\label{links}}
+
+\url{https://www.lcbp.org/publications/quantifying-phosphorus-retention-in-restored-riparian-wetlands-of-the-lake-champlain-basin-technical-report-102/}
+
+\url{https://www.lcbp.org/wp-content/uploads/2016/03/102_Quantifying-Phosphorus-Retention-in-Restored-Riparian-Wetlands-of-the-Lake-Champlain-Basin-1.pdf}
+
 \hypertarget{buildnotes}{%
 \subsubsection{Buildnotes}\label{buildnotes}}
 
 Model version: wetlandP\_v2.1
 
-The data for this project are hosted at the authors private github
-repository: \url{https://github.com/arhwiegman/wetlandP}
-
-The current version of the model is available within the wetlandP
-repository:
-\url{https://github.com/arhwiegman/wetlandP/tree/master/model_versions/wetlandP_v2/wetlandP_v2.1}
-
-This repository will be made public upon publication of this work.
+The development version of the wetlandP\_v2.1 model and additional
+supporting data are hosted at the authors private github repository:
+\url{https://github.com/arhwiegman/wetlandP}
 
 \hypertarget{status-of-this-version}{%
 \paragraph{Status (of this version)}\label{status-of-this-version}}
@@ -225,10 +254,12 @@ and run the model and view model outputs.
 A current list of the working directory is given below.
 
 \begin{verbatim}
-## [1] "documentation"                     "Documentation – wetlandP_v2.1.pdf"
-## [3] "inputs"                            "outputs"                          
-## [5] "ReadMe.html"                       "ReadMe.Rmd"                       
-## [7] "scripts"                           "wetlandP.Rproj"
+##  [1] "~$ReadMe.docx"                     "documentation"                    
+##  [3] "Documentation – wetlandP_v2.1.pdf" "inputs"                           
+##  [5] "outputs"                           "ReadMe.docx"                      
+##  [7] "ReadMe.html"                       "ReadMe.Rmd"                       
+##  [9] "ReadMe.tex"                        "scripts"                          
+## [11] "wetlandP.Rproj"
 \end{verbatim}
 
 The sections below describe the \texttt{documentation},
@@ -374,126 +405,146 @@ of the model (such as ``processes'') \\
 \hypertarget{inputs-folder}{%
 \subsubsection{Inputs Folder}\label{inputs-folder}}
 
-Inputs are taken as \texttt{.csv} (comma separated values) files and
-read in using the function \texttt{readr::read\_csv()}. There are two
-kinds of input file, \texttt{df.hydroclimate...csv} and
-\texttt{df.parameters...csv}.\texttt{hydroclimate} files provide a time
-series of forcing data with the top row as the variable name and each
-column containing the values for the variable at time \texttt{t}, at
-least one column must be named \texttt{t}. \texttt{parameters} files are
-tables with the columns from left to right variable name, default value,
-units, description, assumptioms, random distribution function name and
-inputs.
+There are two kinds of input file, \texttt{hydroclimate} and
+\texttt{parameters}.One way to read inputs is to save the data tables as
+\texttt{.csv} (comma separated values) files and read them in using the
+function \texttt{readr::read\_csv()}. The scripts within implementation
+handles reading of input data. See
+\texttt{scrips/\_implementations/xecute\_lcbp\_sensitivity.R} for an
+example of how to read inputs into R.
+
+The \texttt{hydroclimate} files provide a time series of forcing data
+with the top row as the variable name and each column containing the
+values for the variable at time \texttt{t}, at least one column must be
+named \texttt{t}. The \texttt{hydroclimate} files for these sites
+provided in the main directory of the \texttt{inputs} folder.
+
+There is more flexibility about how \texttt{parameters} can be defined
+for initializing the model parameters include, stochastic parameters,
+and initial values for state variables. The only requirement is that the
+name of the parameters provided by the user matches the name of the
+parameters in the model. If sensitivity analysis is being performed or
+multiple sites are being simulated the simplest way to provide
+parameters to the model is using a data table where the rows correspond
+to scenarios or model runs, and the columns correspond to parameter
+values, the first row of the data file contains the names of each
+parameter being provided to the model.
+
+For this project the \texttt{parameters} files are contained within a
+sub directory \texttt{inputs/lcbp\_sites} and they are stored as sheets
+within a Microsoft Excel \texttt{xlsx} file
+\texttt{lcbp\_input\_concentrations.xlsx} (this file also contains
+supporting data used to calculate parameter values). The input
+parameters are contained on sheets that have the prefix \texttt{pars}.
+Additional data are also contained in the file
+\texttt{df.lcbp.stocks.xlsx}. These \texttt{xlsx} files can be read and
+manipulated for free within R using the \texttt{readxl} package.
 
 \begin{verbatim}
-##   [1] "CH3_simulation_vars.Rmd"                          
-##   [2] "coreflux"                                         
-##   [3] "df.climate.subdaily.csv"                          
-##   [4] "df.hydroclimate.1m.LC.0.csv"                      
-##   [5] "df.hydroclimate.1m.LC.0.Rdata"                    
-##   [6] "df.hydroclimate.1m.LC.0x1p2.csv"                  
-##   [7] "df.hydroclimate.1m.LC.0x1p2.Rdata"                
-##   [8] "df.hydroclimate.1m.LC.0x2.csv"                    
-##   [9] "df.hydroclimate.1m.LC.0x2.Rdata"                  
-##  [10] "df.hydroclimate.1m.LC.1.csv"                      
-##  [11] "df.hydroclimate.1m.LC.1.Rdata"                    
-##  [12] "df.hydroclimate.1m.LC.1x1p2.csv"                  
-##  [13] "df.hydroclimate.1m.LC.1x1p2.Rdata"                
-##  [14] "df.hydroclimate.1m.LC.1x2.csv"                    
-##  [15] "df.hydroclimate.1m.LC.1x2.Rdata"                  
-##  [16] "df.hydroclimate.1m.LC.2.csv"                      
-##  [17] "df.hydroclimate.1m.LC.2.Rdata"                    
-##  [18] "df.hydroclimate.1m.LC.2x1p2.csv"                  
-##  [19] "df.hydroclimate.1m.LC.2x1p2.Rdata"                
-##  [20] "df.hydroclimate.1m.LC.2x2.csv"                    
-##  [21] "df.hydroclimate.1m.LC.2x2.Rdata"                  
-##  [22] "df.hydroclimate.1m.LC.3.csv"                      
-##  [23] "df.hydroclimate.1m.LC.3.Rdata"                    
-##  [24] "df.hydroclimate.1m.LC.3x1p2.csv"                  
-##  [25] "df.hydroclimate.1m.LC.3x1p2.Rdata"                
-##  [26] "df.hydroclimate.1m.LC.3x2.csv"                    
-##  [27] "df.hydroclimate.1m.LC.3x2.Rdata"                  
-##  [28] "df.hydroclimate.1m.LC.4.csv"                      
-##  [29] "df.hydroclimate.1m.LC.4.Rdata"                    
-##  [30] "df.hydroclimate.1m.LC.4x1p2.csv"                  
-##  [31] "df.hydroclimate.1m.LC.4x1p2.Rdata"                
-##  [32] "df.hydroclimate.1m.LC.4x2.csv"                    
-##  [33] "df.hydroclimate.1m.LC.4x2.Rdata"                  
-##  [34] "df.hydroclimate.1m.OCD.0.csv"                     
-##  [35] "df.hydroclimate.1m.OCD.0.Rdata"                   
-##  [36] "df.hydroclimate.1m.OCD.0x1p2.csv"                 
-##  [37] "df.hydroclimate.1m.OCD.0x1p2.Rdata"               
-##  [38] "df.hydroclimate.1m.OCD.0x2.csv"                   
-##  [39] "df.hydroclimate.1m.OCD.0x2.Rdata"                 
-##  [40] "df.hydroclimate.1m.OCD.1.csv"                     
-##  [41] "df.hydroclimate.1m.OCD.1.Rdata"                   
-##  [42] "df.hydroclimate.1m.OCD.1x1p2.csv"                 
-##  [43] "df.hydroclimate.1m.OCD.1x1p2.Rdata"               
-##  [44] "df.hydroclimate.1m.OCD.1x2.csv"                   
-##  [45] "df.hydroclimate.1m.OCD.1x2.Rdata"                 
-##  [46] "df.hydroclimate.1m.OCD.2.csv"                     
-##  [47] "df.hydroclimate.1m.OCD.2.Rdata"                   
-##  [48] "df.hydroclimate.1m.OCD.2x1p2.csv"                 
-##  [49] "df.hydroclimate.1m.OCD.2x1p2.Rdata"               
-##  [50] "df.hydroclimate.1m.OCD.2x2.csv"                   
-##  [51] "df.hydroclimate.1m.OCD.2x2.Rdata"                 
-##  [52] "df.hydroclimate.1m.OCD.3.csv"                     
-##  [53] "df.hydroclimate.1m.OCD.3.Rdata"                   
-##  [54] "df.hydroclimate.1m.OCD.3x1p2.csv"                 
-##  [55] "df.hydroclimate.1m.OCD.3x1p2.Rdata"               
-##  [56] "df.hydroclimate.1m.OCD.3x2.csv"                   
-##  [57] "df.hydroclimate.1m.OCD.3x2.Rdata"                 
-##  [58] "df.hydroclimate.1m.OCD.4.csv"                     
-##  [59] "df.hydroclimate.1m.OCD.4.Rdata"                   
-##  [60] "df.hydroclimate.1m.OCD.4x1p2.csv"                 
-##  [61] "df.hydroclimate.1m.OCD.4x1p2.Rdata"               
-##  [62] "df.hydroclimate.1m.OCD.4x2.csv"                   
-##  [63] "df.hydroclimate.1m.OCD.4x2.Rdata"                 
-##  [64] "df.hydroclimate.1m.OCSP.0.csv"                    
-##  [65] "df.hydroclimate.1m.OCSP.0.Rdata"                  
-##  [66] "df.hydroclimate.1m.OCSP.0x1p2.csv"                
-##  [67] "df.hydroclimate.1m.OCSP.0x1p2.Rdata"              
-##  [68] "df.hydroclimate.1m.OCSP.0x2.csv"                  
-##  [69] "df.hydroclimate.1m.OCSP.0x2.Rdata"                
-##  [70] "df.hydroclimate.1m.OCSP.1.csv"                    
-##  [71] "df.hydroclimate.1m.OCSP.1.Rdata"                  
-##  [72] "df.hydroclimate.1m.OCSP.1x1p2.csv"                
-##  [73] "df.hydroclimate.1m.OCSP.1x1p2.Rdata"              
-##  [74] "df.hydroclimate.1m.OCSP.1x2.csv"                  
-##  [75] "df.hydroclimate.1m.OCSP.1x2.Rdata"                
-##  [76] "df.hydroclimate.1m.OCSP.2.csv"                    
-##  [77] "df.hydroclimate.1m.OCSP.2.Rdata"                  
-##  [78] "df.hydroclimate.1m.OCSP.2x1p2.csv"                
-##  [79] "df.hydroclimate.1m.OCSP.2x1p2.Rdata"              
-##  [80] "df.hydroclimate.1m.OCSP.2x2.csv"                  
-##  [81] "df.hydroclimate.1m.OCSP.2x2.Rdata"                
-##  [82] "df.hydroclimate.1m.OCSP.3.csv"                    
-##  [83] "df.hydroclimate.1m.OCSP.3.Rdata"                  
-##  [84] "df.hydroclimate.1m.OCSP.3x1p2.csv"                
-##  [85] "df.hydroclimate.1m.OCSP.3x1p2.Rdata"              
-##  [86] "df.hydroclimate.1m.OCSP.3x2.csv"                  
-##  [87] "df.hydroclimate.1m.OCSP.3x2.Rdata"                
-##  [88] "df.hydroclimate.1m.OCSP.4.csv"                    
-##  [89] "df.hydroclimate.1m.OCSP.4.Rdata"                  
-##  [90] "df.hydroclimate.1m.OCSP.4x1p2.csv"                
-##  [91] "df.hydroclimate.1m.OCSP.4x1p2.Rdata"              
-##  [92] "df.hydroclimate.1m.OCSP.4x2.csv"                  
-##  [93] "df.hydroclimate.1m.OCSP.4x2.Rdata"                
-##  [94] "df.hydroclimate.day.LC.csv"                       
-##  [95] "df.hydroclimate.day.LC.Rdata"                     
-##  [96] "df.hydroclimate_dynamic.csv"                      
-##  [97] "df.hydroclimate_dynamic.csv.xlsx"                 
-##  [98] "df.hydroclimate_static.csv"                       
-##  [99] "df.hydroclimate_static.csv.xlsx"                  
-## [100] "df.hydroclimate_steady_state_sensitivity.csv"     
-## [101] "df.hydroclimate_steady_state_sensitivity.csv.xlsx"
-## [102] "df.pred.csv"                                      
-## [103] "df.stage_volume_discharge.csv"                    
-## [104] "df.stage_volume_discharge.Rdata"                  
-## [105] "hydrosummary.txt"                                 
-## [106] "lcbp_sites"                                       
-## [107] "readme.txt"                                       
-## [108] "simulation_steps.txt"
+##   [1] "df.climate.subdaily.csv"                          
+##   [2] "df.hydroclimate.1m.LC.0.csv"                      
+##   [3] "df.hydroclimate.1m.LC.0.Rdata"                    
+##   [4] "df.hydroclimate.1m.LC.0x1p2.csv"                  
+##   [5] "df.hydroclimate.1m.LC.0x1p2.Rdata"                
+##   [6] "df.hydroclimate.1m.LC.0x2.csv"                    
+##   [7] "df.hydroclimate.1m.LC.0x2.Rdata"                  
+##   [8] "df.hydroclimate.1m.LC.1.csv"                      
+##   [9] "df.hydroclimate.1m.LC.1.Rdata"                    
+##  [10] "df.hydroclimate.1m.LC.1x1p2.csv"                  
+##  [11] "df.hydroclimate.1m.LC.1x1p2.Rdata"                
+##  [12] "df.hydroclimate.1m.LC.1x2.csv"                    
+##  [13] "df.hydroclimate.1m.LC.1x2.Rdata"                  
+##  [14] "df.hydroclimate.1m.LC.2.csv"                      
+##  [15] "df.hydroclimate.1m.LC.2.Rdata"                    
+##  [16] "df.hydroclimate.1m.LC.2x1p2.csv"                  
+##  [17] "df.hydroclimate.1m.LC.2x1p2.Rdata"                
+##  [18] "df.hydroclimate.1m.LC.2x2.csv"                    
+##  [19] "df.hydroclimate.1m.LC.2x2.Rdata"                  
+##  [20] "df.hydroclimate.1m.LC.3.csv"                      
+##  [21] "df.hydroclimate.1m.LC.3.Rdata"                    
+##  [22] "df.hydroclimate.1m.LC.3x1p2.csv"                  
+##  [23] "df.hydroclimate.1m.LC.3x1p2.Rdata"                
+##  [24] "df.hydroclimate.1m.LC.3x2.csv"                    
+##  [25] "df.hydroclimate.1m.LC.3x2.Rdata"                  
+##  [26] "df.hydroclimate.1m.LC.4.csv"                      
+##  [27] "df.hydroclimate.1m.LC.4.Rdata"                    
+##  [28] "df.hydroclimate.1m.LC.4x1p2.csv"                  
+##  [29] "df.hydroclimate.1m.LC.4x1p2.Rdata"                
+##  [30] "df.hydroclimate.1m.LC.4x2.csv"                    
+##  [31] "df.hydroclimate.1m.LC.4x2.Rdata"                  
+##  [32] "df.hydroclimate.1m.OCD.0.csv"                     
+##  [33] "df.hydroclimate.1m.OCD.0.Rdata"                   
+##  [34] "df.hydroclimate.1m.OCD.0x1p2.csv"                 
+##  [35] "df.hydroclimate.1m.OCD.0x1p2.Rdata"               
+##  [36] "df.hydroclimate.1m.OCD.0x2.csv"                   
+##  [37] "df.hydroclimate.1m.OCD.0x2.Rdata"                 
+##  [38] "df.hydroclimate.1m.OCD.1.csv"                     
+##  [39] "df.hydroclimate.1m.OCD.1.Rdata"                   
+##  [40] "df.hydroclimate.1m.OCD.1x1p2.csv"                 
+##  [41] "df.hydroclimate.1m.OCD.1x1p2.Rdata"               
+##  [42] "df.hydroclimate.1m.OCD.1x2.csv"                   
+##  [43] "df.hydroclimate.1m.OCD.1x2.Rdata"                 
+##  [44] "df.hydroclimate.1m.OCD.2.csv"                     
+##  [45] "df.hydroclimate.1m.OCD.2.Rdata"                   
+##  [46] "df.hydroclimate.1m.OCD.2x1p2.csv"                 
+##  [47] "df.hydroclimate.1m.OCD.2x1p2.Rdata"               
+##  [48] "df.hydroclimate.1m.OCD.2x2.csv"                   
+##  [49] "df.hydroclimate.1m.OCD.2x2.Rdata"                 
+##  [50] "df.hydroclimate.1m.OCD.3.csv"                     
+##  [51] "df.hydroclimate.1m.OCD.3.Rdata"                   
+##  [52] "df.hydroclimate.1m.OCD.3x1p2.csv"                 
+##  [53] "df.hydroclimate.1m.OCD.3x1p2.Rdata"               
+##  [54] "df.hydroclimate.1m.OCD.3x2.csv"                   
+##  [55] "df.hydroclimate.1m.OCD.3x2.Rdata"                 
+##  [56] "df.hydroclimate.1m.OCD.4.csv"                     
+##  [57] "df.hydroclimate.1m.OCD.4.Rdata"                   
+##  [58] "df.hydroclimate.1m.OCD.4x1p2.csv"                 
+##  [59] "df.hydroclimate.1m.OCD.4x1p2.Rdata"               
+##  [60] "df.hydroclimate.1m.OCD.4x2.csv"                   
+##  [61] "df.hydroclimate.1m.OCD.4x2.Rdata"                 
+##  [62] "df.hydroclimate.1m.OCSP.0.csv"                    
+##  [63] "df.hydroclimate.1m.OCSP.0.Rdata"                  
+##  [64] "df.hydroclimate.1m.OCSP.0x1p2.csv"                
+##  [65] "df.hydroclimate.1m.OCSP.0x1p2.Rdata"              
+##  [66] "df.hydroclimate.1m.OCSP.0x2.csv"                  
+##  [67] "df.hydroclimate.1m.OCSP.0x2.Rdata"                
+##  [68] "df.hydroclimate.1m.OCSP.1.csv"                    
+##  [69] "df.hydroclimate.1m.OCSP.1.Rdata"                  
+##  [70] "df.hydroclimate.1m.OCSP.1x1p2.csv"                
+##  [71] "df.hydroclimate.1m.OCSP.1x1p2.Rdata"              
+##  [72] "df.hydroclimate.1m.OCSP.1x2.csv"                  
+##  [73] "df.hydroclimate.1m.OCSP.1x2.Rdata"                
+##  [74] "df.hydroclimate.1m.OCSP.2.csv"                    
+##  [75] "df.hydroclimate.1m.OCSP.2.Rdata"                  
+##  [76] "df.hydroclimate.1m.OCSP.2x1p2.csv"                
+##  [77] "df.hydroclimate.1m.OCSP.2x1p2.Rdata"              
+##  [78] "df.hydroclimate.1m.OCSP.2x2.csv"                  
+##  [79] "df.hydroclimate.1m.OCSP.2x2.Rdata"                
+##  [80] "df.hydroclimate.1m.OCSP.3.csv"                    
+##  [81] "df.hydroclimate.1m.OCSP.3.Rdata"                  
+##  [82] "df.hydroclimate.1m.OCSP.3x1p2.csv"                
+##  [83] "df.hydroclimate.1m.OCSP.3x1p2.Rdata"              
+##  [84] "df.hydroclimate.1m.OCSP.3x2.csv"                  
+##  [85] "df.hydroclimate.1m.OCSP.3x2.Rdata"                
+##  [86] "df.hydroclimate.1m.OCSP.4.csv"                    
+##  [87] "df.hydroclimate.1m.OCSP.4.Rdata"                  
+##  [88] "df.hydroclimate.1m.OCSP.4x1p2.csv"                
+##  [89] "df.hydroclimate.1m.OCSP.4x1p2.Rdata"              
+##  [90] "df.hydroclimate.1m.OCSP.4x2.csv"                  
+##  [91] "df.hydroclimate.1m.OCSP.4x2.Rdata"                
+##  [92] "df.hydroclimate.day.LC.csv"                       
+##  [93] "df.hydroclimate.day.LC.Rdata"                     
+##  [94] "df.hydroclimate_dynamic.csv"                      
+##  [95] "df.hydroclimate_dynamic.csv.xlsx"                 
+##  [96] "df.hydroclimate_static.csv"                       
+##  [97] "df.hydroclimate_static.csv.xlsx"                  
+##  [98] "df.hydroclimate_steady_state_sensitivity.csv"     
+##  [99] "df.hydroclimate_steady_state_sensitivity.csv.xlsx"
+## [100] "df.pred.csv"                                      
+## [101] "df.stage_volume_discharge.csv"                    
+## [102] "df.stage_volume_discharge.Rdata"                  
+## [103] "lcbp_sites"                                       
+## [104] "readme.txt"
 \end{verbatim}
 
 \hypertarget{outputs-folder}{%
@@ -530,8 +581,12 @@ variable values along the time series the model run \\
 A snapshot of the outputs folder is given below:
 
 \begin{verbatim}
-## [1] "outputs_summary_net_TP_balance_lcbp_sensitivity.csv"
-## [2] "sim_static_Z_w_2020-05-18_May051589821296.Rdata"
+## [1] "df.sim.outs_summary.Rdata"                                   
+## [2] "env_xecute_lcbp_sensitivity_2023-08-23_Aug081692799909.Rdata"
+## [3] "fig_boxplot_DIPeff_vsCx.png"                                 
+## [4] "fig_boxplot_dTP_assumptions.png"                             
+## [5] "fig_boxplot_dTP_Cx.png"                                      
+## [6] "fig_boxplot_dTP_HRTx.png"
 \end{verbatim}
 
 \hypertarget{model-variables}{%

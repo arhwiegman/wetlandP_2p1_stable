@@ -1,0 +1,669 @@
+---
+title: "PrindleBrook_Hydroclimate_Preprocessing"
+author: "Adrian Wiegman"
+date: "2/5/2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r setup, include=FALSE}
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message= FALSE)
+dependancies <- c("tidyverse",
+                  "zoo", # time series functions
+                  "broom", # applying functions to nested data
+                  "Evapotranspiration", # evapotranspiration modeling
+                  "lubridate", # easy date formatting
+                  "forecast", # time series functions
+                  "cowplot", # to make nice figure pannels
+                  "patchwork", # to make nice figure pannels
+                  "scales", # to access break formatting functions
+                  "akima", # for interpolation of matrixes
+                  "rgl",
+                  "stringr") # for plotting 3d matrixes
+pacman::p_load(dependancies,character.only = T)
+```
+
+```{r}
+require(stringr)
+# Load data
+parent <- dirname(getwd())
+path <- paste0(parent,"/lcbp/")
+datafiles <- list.files(path) %>%
+  str_extract(".*\\.Rdata")%>% na.omit %>% paste0(path,.)
+for(file in datafiles){
+  load(file)
+}
+#l
+```
+
+
+
+
+## Hydroclimatic Variables
+
+
+The model was forced with precipitation, temperature and wind speed data from Burlington Int'l Airport. Evapotranspiration rate was estimated using the penman monteith method, 
+
+$$
+
+dVw =  A(ip - ET) + Qg + Qin - Qout \\
+
+$$
+
+```{r}
+x <- "
+Symbol | Units | Definition | Assumptions and Sources
+Zs | (m, NAD'83)| elevation of sediment surface  | estimated from LiDAR 0.5m DEM (VCGI), corrected with Emlid Reach RS+ RTK/GNSS survey (centimeter level accuracy) |
+Hw | (m) | height of water above sediment surface | measured with HOBO MX2001 water level logger |
+Zw | (m, NAD'83)| elevation of water | $Hw +  Zs$ | 
+A | (m2) | wetland surface area | interpolated from stage table as $f(Hw)$ |
+Vw | (m3) | Water volume of wetland surface water | interpolated from stage table as $f(Hw)$ |
+Qin | (m3/day) | Volumetric inflow rate | modeled with HydroCAD and/or solved from water balance |
+Qout | (m3/day)| Wetland discharge (outflow) rate | Modeled as a $f(Hw)$ based on site observations | 
+ET | (cm/day) | Evapotranspiration rate | Calculated at daily intervals with penman monteith equation via the `Evapotranspiration` package, weather data from BURLINGTON INTERNATIONAL AIRPORT, VT US (WBAN:14742)  | 
+ip | (cm/day) | Precipitation rate | totals derived from sub-hourly weather observations from BURLINGTON INTERNATIONAL AIRPORT, VT US (WBAN:14742)
+Qg | (m3/day) | Groundwater discharge (negative for infiltration) |
+Uw |(m/s) | Wind speed | mean derived from sub-hourly data from BURLINGTON INTERNATIONAL AIRPORT, VT US (WBAN:14742)
+Tair | (°C) | Daily air temperature | mean derived from sub-hourly data BURLINGTON INTERNATIONAL AIRPORT, VT US (WBAN:14742)
+Twater | (°C) | Daily water temperature | Measured by HOBO MX2001 or PME MiniDOT or using equation $5+0.75*Tair$ | 
+"
+read_delim(x,delim="|") %>% knitr::kable(caption="Table 1. Hydroclimate variables")
+```
+
+
+### Bathymetry and Flow
+
+This table gives the relationships between stage, area, volume and outflow which are based on a HydroCAD model for the catchment. 
+```{r}
+m.ft = 0.3048 #m/ft 1 foot = 0.3048 m3
+m3.acft = 1233.48185532  #ac-ft/m3, 1 acre-foot = 1233.48185532 m3
+m3s.cfs = 0.028316847 # 1 cfs = .028 cm/s
+cm.in = 2.54 # 1 in = 2.54 cm
+HydroCADpath <- "HydroCAD/HydroCAD_model_run1_5and1yr/"
+d <- read_csv(paste0(HydroCADpath,"Stage-Area-Storage Table.csv")) %>% left_join(read_csv(paste0(HydroCADpath,"Stage-Discharge Table.csv")))
+d <- readxl::read_xlsx("C:/Workspace/wetlandP/data/modeling_inputs/DEMHF_0p7m_PrindleRd_StorageCapacity_TableToExcel.xlsx")
+#colnames(d) <- c("Elev.ft","Storage.acft","Discharge.cfs")
+Zbottom = d$`Elevation\n(feet)`[1]*m.ft
+df.stage_volume_discharge <- d %>% 
+  select(Zw=ELEVATION,
+         Vw=VOLUME,
+         A=AREA) %>%
+  mutate(Hw=Zw-112.5) # water height above wl recorder
+
+df.stage_volume_discharge %>% print
+x <- "
+# Dummy Data
+# Water Elevation (m) | Height (m) | Area (m2) | Water Volume (m3) | Outflow (m3/d)
+Zw|Hw|A|Vw|Qout
+108+0.01|0.01|0.0001|0.00
+108+0.015|0.015|158.15|1.58|0.00
+108+0.02|0.02|316.31|6.33|0.00
+108+0.03|0.03|474.46|14.23|0.00
+108+0.04|0.04|632.61|25.30|0.00
+108+0.05|0.05|790.76|39.54|0.00
+108+0.06|0.06|948.92|56.94|0.00
+108+0.07|0.07|1107.07|77.49|0.00
+108+0.08|0.08|1265.22|101.22|0.00
+108+0.09|0.09|1423.38|128.10|0.00
+108+0.10|0.10|1581.53|158.15|0.00
+"
+plot(df.stage_volume_discharge %>% select(-Zw), main="bathymetric relationships")
+save(df.stage_volume_discharge,file="df.stage_volume_discharge.Rdata")
+write_csv(df.stage_volume_discharge,"df.stage_volume_discharge.csv")
+```
+
+### Climate 
+
+Temperature, Precipitation, Wind Speed Data 
+
+
+```{r}
+load("df.climate.day.Rdata")
+df.hydroclimate.day <- df.climate.day %>% 
+  filter(city=="Burlington") %>%
+  #filter(date>=startdate) %>%
+  mutate(days_elapsed = difftime(date,ymd("2019-01-01"),units="days"),
+         Uw = DailyAverageWindSpeed*0.44704,
+         ip = DailyPrecipitation*2.54,
+         Tair = (DailyAverageDryBulbTemperature - 32)/1.8,
+         Tair_max = (DailyMaximumDryBulbTemperature - 32)/1.8,
+         Tair_min = (DailyMinimumDryBulbTemperature - 32)/1.8,
+         Twater = 2.5+0.8*Tair,
+         Twater = ifelse(Twater<1,1,Twater),
+         ip = ifelse(is.na(ip),0,ip),
+         amc = ifelse(is.na(AMC),2,AMC)) %>%
+  group_by(date,days_elapsed) %>% 
+  select(Uw,ip,Tair,Twater,amc)
+
+load("df.ET.PM.Rdata") 
+df.ET.daily <- df.ET.PM$ET.Daily %>% fortify.zoo() %>% rename(date="Index",ET=".") %>%
+  mutate(ET=ET/10) # cm/day 
+
+df.hydroclimate.day <- df.hydroclimate.day %>%
+  left_join(df.ET.daily)
+
+save(df.hydroclimate.day,file="df.hydroclimate.day.LC.Rdata")
+write_csv(df.hydroclimate.day,"df.hydroclimate.day.LC.csv")
+
+df.hydroclimate.day %>% ggplot() +
+  geom_line(aes(x=date,y=ip),color="blue",alpha=0.5) +
+  geom_line(aes(x=date,y=ET),color="red") + geom_smooth(aes(x=date,y=ET),color="red",span=.2) +
+  geom_smooth(aes(x=date,y=ip),color="blue",span=.2)
+
+df.hydroclimate.day %>% ggplot() + geom_line(aes(x=date,y=log(ET)),color="red") +
+  geom_smooth(aes(x=date,y=log(ET)),color="red",span=.2)+
+  geom_line(aes(x=date,y=log(ip)),color="blue") +
+  geom_smooth(aes(x=date,y=log(ip)),color="blue",span=.2)
+```
+
+```{r}
+load("df.climate.hour.Rdata")
+str(df.climate.hour)
+df.hydroclimate.hour <- df.climate.hour %>% 
+  #filter(city=="Burlington") %>%
+  #filter(date>=startdate) %>%
+  mutate(days_elapsed = difftime(datetime,ymd_hms("2019-01-01 00:00:00",tz="EST"),units="days"),
+         hours_elapsed = difftime(datetime,ymd_hms("2019-01-01 00:00:00",tz="EST"),units="hours"),
+         Uw = HourlyWindSpeed*0.44704,
+         ip = HourlyPrecipitation*2.54, #inch  to m
+         Tair = (HourlyDryBulbTemperature - 32)/1.8,
+         Twater = 2.5+0.8*Tair,
+         Twater = ifelse(Twater<1,1,Twater),
+         ip = ifelse(is.na(ip),0,ip),
+         amc = ifelse(is.na(AMC),2,AMC)) %>%
+  group_by(date,days_elapsed,datetime,hours_elapsed) %>% 
+  select(city,Uw,ip,Tair,Twater,amc)
+df.hydroclimate <- df.hydroclimate.hour %>% 
+  summary(df.hydroclimate)
+
+df.hydroclimate.hour %>% filter(date>"2019-10-01"&date<"2019-11-15") %>%
+  ungroup() %>% 
+  select(city,datetime,date,precip_inches=ip,Tair)%>%
+  mutate(precip_inches=precip_inches/2.54) %>% 
+  write_csv(path="df.climate.subdaily.csv")
+
+# load evapotranspiration data 
+load("df.ET.PM.Rdata") 
+df.ET.hourly <- df.ET.PM$ET.Daily %>% fortify.zoo() %>% rename(date="Index",ET=".") %>%
+  mutate(ET=ET/10/24) # mm/day to m/hr 
+
+df.hydroclimate.hour <- df.hydroclimate.hour %>%
+  left_join(df.ET.hourly)
+
+df.hydroclimate.hour  %>% ggplot() + geom_line(aes(x=datetime,y=log(ET)),color="red") +
+  geom_smooth(aes(x=datetime,y=log(ET)),color="red",span=.2)+
+  geom_line(aes(x=datetime,y=log(ip)),color="blue") +
+  geom_smooth(aes(x=datetime,y=log(ip)),color="blue",span=.2)
+```
+
+
+### Water level data
+
+```{r bathymetry}
+# FORCING FUNCTIONS
+fn.Vw.Hw <- approxfun(x=df.stage_volume_discharge$Hw,
+                      y=df.stage_volume_discharge$Vw,
+                      rule=2) # Height to Volume
+fn.Hw.Vw <- approxfun(x=df.stage_volume_discharge$Vw,
+                      y=df.stage_volume_discharge$Hw,
+                      rule=2) # Volume to Height
+fn.A.Hw <- approxfun(df.stage_volume_discharge$Hw,
+                     df.stage_volume_discharge$A,
+                     rule=2) # Height to Area
+# fn.Qout.Hw <- approxfun(df.stage_volume_discharge$Hw,
+#                         df.stage_volume_discharge$Qout*60*60*24,
+#                         rule=2) # Height to Outflow (m3d)
+```
+
+
+
+```{r}
+df.hc.unit.long <- df.hc.unit %>% ungroup %>% select(t,-date,-days_elapsed,is.numeric) %>% pivot_longer(cols=c(-t))
+df.hc.unit.long %>% ggplot() + geom_line(aes(x=t,y=value)) + facet_wrap(vars(name),scales="free")
+gVw <- ggplot(data=df.hc.unit)+geom_line(aes(x=date,y=Vw))
+gdVw <- ggplot(data=df.hc.unit)+geom_line(aes(x=date,y=dVw))
+gQout <- ggplot(data=df.hc.unit)+geom_line(aes(x=date,y=Qout))
+gQin <- ggplot(data=df.hc.unit)+geom_line(aes(x=date,y=Qin))
+df.dH.day$Vw_check == 0
+```
+
+#### Join Water level data with Hydroclimate data
+
+```{r}
+df.hc <- df.hydroclimate.day %>%
+  left_join(df.dH.day) %>%
+  na.omit() %>%
+  mutate(Vw=fn.Vw.Hw(Hw),
+         Qout=fn.Qout.Hw(Hw),
+         A=fn.A.Hw(Hw),
+         Qip = A*ip,
+         QET = A*ET)
+
+df.hc <- df.hydroclimate.day %>%
+  left_join(df.dH.day) %>%
+  na.omit() %>%
+  mutate(Vw=fn.Vw.Hw(Hw),
+         Qout=fn.Qout.Hw(Hw),
+         A=fn.A.Hw(Hw),
+         Qip = A*ip,
+         QET = A*ET)
+df.hc %>% filter(Tair>0) %>% lm(Tw~Tair,data=.) %>% summary
+df.hc$Twater = 2.72+.75*df.hc$Tair # linear regresion
+df.hc$Twater = ifelse(df.hc$Tair<0,2,df.hc$Twater) # correct for negative values
+#df.hc$Twater = 3.5+0.75*Tair # fit by hand regression
+ggplot(df.hc) +
+  geom_point(aes(y=Tw,x=Tair)) +
+  geom_smooth(aes(y=Tw,x=Tair),method="lm")+
+  geom_abline(slope=1)
+ggplot(df.hc) +
+  geom_point(aes(y=Twater,x=Tw)) +
+  geom_smooth(aes(y=Twater,x=Tw),method="lm")+
+  geom_abline(slope=1)
+
+gT <- ggplot(df.hc) + geom_line(aes(x=date,y=Tw))
+gip <- ggplot(df.hc) + geom_line(aes(x=date,y=Qip))
+gET <- ggplot(df.hc) + geom_line(aes(x=date,y=QET))
+gH <- ggplot(df.hc) + geom_line(aes(x=date,y=Hw))
+gQ <- ggplot(df.hc) + geom_line(aes(x=date,y=Qout))
+gV <- ggplot(df.hc) + geom_line(aes(x=date,y=Vw))
+gA <- ggplot(df.hc) + geom_line(aes(x=date,y=A))
+gip/gET/gQ
+
+
+```
+
+
+### Inflow Hydrograph from Precipitation Data & 
+
+Here I generate an inflow hydrograph summing precipitation event hydrographs for the model simulation period.
+
+#### 1. Flow vs Time Since Event various event sizes
+
+Load the data from HydroCAD outputs
+
+```{}
+AMCs = paste("AMC",1:4) # antecedent moisture condition 1 = dry, 2 = normal, 3 = wet, 4 = saturated/frozen
+AMCs = AMCs[2:3] # antecedent moisture condition
+sizes = c(199,250) # precipitation over 24hrs in hundredths of an inch
+nsizes = length(sizes)
+nAMCs = length(AMCs)
+# times by sizes matrix for flow 
+hydrographs <- vector("list",nsizes*nAMCs)
+i=0
+j = 1
+for (amc in AMCs){
+  j = j+1
+  print(amc)
+  for (size in sizes){
+    i = i + 1
+    filename <- paste0(HydroCADpath,paste("PrindleBrook Pond 24hr",size,amc,"Hydrograph Table.csv"))
+    d <- read_csv(filename) %>% mutate(AMC=amc,size=size) %>% group_by(AMC,size)
+    hydrographs[[i]] <- d 
+  }
+}
+df.hydrographs <- reduce(hydrographs,full_join) %>% mutate(Qin = `Inflow\n(cfs)`*m3s.cfs) # units: m3/s 
+df.hydrographs.wide <- df.hydrographs %>% 
+  pivot_wider(
+    id_col=c(`Time\n(hours)`,AMC),
+    names_from= c(size),
+    values_from=Qin) %>%
+  mutate(days_elapsed = ceiling(4*`Time\n(hours)`/24)/4) %>% # break the day into quarters
+  select(-`Time\n(hours)`) %>% 
+  group_by(days_elapsed,AMC) %>%
+  # delete this chunk when all precipitation sizes are available from hydrocad
+  mutate(`0`=`199`*0,
+         `50`=`199`*.5/2,
+         `100`=`199`*1.0/2,
+         `150`=`199`*1.5/2,
+         `300`=`250`*3/2.5,
+         `350`=`250`*1.5/2.5) %>%
+  summarize_all(~mean(.*60*60*24))%>% # convert from m3s to m3d
+  select(order(colnames(.) %>% na.omit %>% as.numeric)) %>%
+  relocate(where(is.numeric), .after = where(is.character)) %>%
+  relocate(last_col(), .after = AMC)
+```
+
+Delete this chunk when all four AMCs are available from hydrocad
+```{}
+df.hydrographs.wide2 <- df.hydrographs.wide %>%
+  mutate(AMC = ifelse(AMC=="AMC 2","AMC 1","AMC 4")) %>%
+  mutate_at(vars(-days_elapsed,-AMC),~case_when(
+    AMC=="AMC 4"~.*1.1,
+    AMC=="AMC 1"~.*0.25,
+    T~.))
+  
+df.hydrographs.wide <- reduce(list(df.hydrographs.wide,df.hydrographs.wide2),full_join)
+```
+
+```{}
+. <- df.hydrographs.wide %>% filter(AMC==amc)
+times <- .$days_elapsed
+sizes <- colnames(.) %>% str_extract("[:digit:]+") %>% na.omit %>% as.numeric
+sizes <- sizes*cm.in
+AMCs = unique(df.hydrographs.wide$AMC)
+nAMCs = length(AMCs)
+flow <- vector("list",length = nAMCs)
+names(flow) <- AMCs
+str(flow)
+for (amc in AMCs){
+  
+  print(amc)
+  d <- df.hydrographs.wide %>% filter(str_detect(AMC,amc))
+  print(d)
+  m <- matrix(data=as.matrix(d[,3:length(d)]),
+              nrow=nrow(d),
+              ncol=length(sizes),
+              dimnames=list(time=d$days_elapsed,
+                            size=sizes))
+  print(m)
+  flow[[amc]] <- m
+}
+str(flow$`AMC 2`)
+```
+
+
+This table will be generated from HydroCAD, for now I am generating a dummy dataset.
+
+```{}
+# Generating dummy data
+times <- seq(1,10) # rows
+sizes <- seq(0.1,10,length.out=10) #cols
+fnAMC <- function(s,t,amc){
+  k=1
+  if(amc==1){k=2} 
+  if(amc==2){k=1.5}
+  if(amc==3){k=1.2}
+  if(amc==4){k=1.1}
+  s*exp(t*-k)+s/1000
+}
+
+# times by sizes matrix for flow 
+m <- matrix(nrow=length(times),
+               ncol=length(sizes),
+               dimnames=list(time=times,
+                             size=sizes))
+flow <- vector("list",4)
+for (amc in 1:4){
+  flow[[amc]] <- m
+  for(i in seq(1,nrow(m))){
+    for (j in seq(1,ncol(m))){
+      t = times[i]
+      s = sizes[j]
+      # calculate flow function of s and t
+      # and on 3 different AMC classes
+      flow[[amc]][i,j] = fnAMC(s,t,amc) 
+    }
+  }
+}
+
+head(flow[[3]])
+#print(flow)
+#length(flow)
+```
+
+Use Akima's method to interpolate the data table 
+```{}
+require(akima)
+  # plot the interpolated surface grid
+require(rgl)
+showplot=T
+if(showplot){
+open3d()
+bg3d("white") # background
+# set parameters
+x=times; y=sizes; xlim = c(min(x),max(x)); ylim = c(min(y),max(y)); k_x = 10; k_y = 10
+colamc <- c("red","yellow","green","blue")
+names(colamc) <- AMCs
+
+# call bicubic.grid
+flow.bicubic <- vector("list",length(AMCs))
+names(flow.bicubic) <- AMCs
+i = 0
+for (amc in AMCs){
+  i = i + 1
+  z=flow[[amc]]
+  flow.bicubic[[amc]] <- bicubic.grid(x=x,y=y,z=z,xlim=xlim,ylim=ylim,
+                             nx=length(x)*k_x,
+                             ny=length(y)*k_y)
+  # REPLACE NEGATIVE VALUES WITH ZEROS
+  flow.bicubic[[amc]]$z <- flow.bicubic[[amc]]$z %>% 
+    apply(c(1,2), function(x) {ifelse(x<0, 0, x)})
+  
+  if (i == 1){
+    persp3d(flow.bicubic[[amc]]$x,
+        flow.bicubic[[amc]]$y,
+        flow.bicubic[[amc]]$z,
+        aspect = c(1, 1, 0.5), alpha=0.5,
+        xlab ="time (days)", ylab = "precip (in/day)", zlab = "flow",
+        polygon_offset = 1)
+  }
+
+  persp3d(flow.bicubic[[amc]]$x,
+        flow.bicubic[[amc]]$y,
+        flow.bicubic[[amc]]$z,
+        front = "lines", back = "lines",
+        lit = FALSE, add = TRUE,col=colamc[amc])
+}
+}
+
+```
+
+#### Matrix of Model Time and Time Since Event Root
+
+Aggregate data on a six hour basis by rounding to the nearest quarter day. 
+
+```{}
+require(tidyr)
+ndays = 180
+startdate = "2019-04-01"
+enddate = date(startdate) + days(ndays) - 1
+df.hc6hr <- df.hydroclimate.hour %>% 
+  filter(date >= startdate & date <= enddate) %>%
+  mutate(
+    days_elapsed = as.numeric(ceiling(4*days_elapsed) / 4)
+  ) %>% 
+  group_by(date,days_elapsed)
+df.hc6hr.sum <- df.hc6hr %>%
+  summarize_at(vars(ip),~sum(.))
+df.hc6hr.mean <- df.hc6hr %>%
+  summarize_at(vars(Twater,Tair,amc,Uw,ET),~mean(.)) %>%
+  mutate(
+    ET = ET*6 # cm/hr to cm/6hr
+  )
+df.hc <- reduce(list(df.hc6hr.sum,df.hc6hr.mean),full_join) 
+increments = df.hc$days_elapsed
+precip = df.hc$ip
+m <- matrix(data=0,
+            nrow=nrow(df.hc),
+            ncol=nrow(df.hc),
+            dimnames=list(start_time=increments,
+                          future_time=increments))
+str(m)
+```
+
+
+```{}
+# start day loop
+for(i in seq_along(increments)){ 
+  #print(c("i:",i))
+  # future day loop
+  ts = df.hc$days_elapsed[i] # start time
+  ip = df.hc$ip[i]
+  amc = paste("AMC",df.hc$amc[i])
+  for(j in seq_along (increments)){
+    #print(c("j:",j))
+    ft = increments[j] # future time 
+    dt = ft - ts #difference between future time and start time
+    if(dt<=0) next
+    z = flow[[amc]]
+    m[i,j] = bicubic(x=times,y=sizes,z=z,x0=dt,y0=ip)$z %>% ifelse(.<0,0,.)
+  }
+}
+#View(m)
+inflow = colSums(m) 
+
+df.hc$Qin = inflow
+save(df.hc, file="df.hc.Rdata")
+df.hc %>% ggplot(aes(x=days_elapsed))+geom_col(aes(y=Qin))+ylab("inflow rate (m3d)")
+```
+
+
+```{r}
+sub_hydrology_preprocessing <- expression({
+  sp <- paste0(s,".",p)
+  HRT = 1e2 # hydraulic residence time
+  Zs <- df.hobo.wetland_summary$elevation[df.hobo.wetland_summary$site_plot==sp]
+  df.H <- df.hobo.wetland %>% 
+    filter(site==s) %>%
+    mutate(date=date(datetime),
+         Tw = tempC, 
+         Hw = Zw - Zs) %>% # elevation at plot zero
+  na.omit
+
+  # calculate change in height. 
+  df.dH <- df.H %>%
+    mutate(t = difftime(datetime,ymd_hms("2019-01-01 00:00:00",tz="UTC"),units="days"),
+         dHw = c(rep(NA,1),diff(Hw,lag=1)),
+         dt = c(rep(NA,1),diff(t,lag=1)),
+         dHw_dt = dHw/dt) %>%
+    na.omit
+
+
+  df.H.day <- df.H %>% 
+    mutate(date=date(datetime)) %>% 
+    group_by(date) %>% 
+    summarise(Hw=max(Hw),
+            TW=mean(Tw))
+  df.dH.day <- df.H.day %>% 
+    mutate(t = difftime(date,date("2019-01-01"),units="days"),
+         site_plot = sp,
+         Z_a=Z_a,
+         A = 1,
+         dHw = c(rep(NA,1),diff(Hw,lag=1)),
+         Vw = Hw*A,
+         dt = c(rep(NA,1),diff(t,lag=1))) %>%
+  na.omit()
+
+  df.hc.unit <- df.hydroclimate.day %>%
+    left_join(df.dH.day) %>%
+    mutate(
+      Qprecip = A*ip/100, # precipitation,
+      QET = A*ET/100, #evapotranspiration,
+      Vw = Hw*A*porosity, # water volume
+      dVw = dHw*A*porosity,
+      Qground = 0,
+      Qnet = A*(porosity*dHw - (ip - ET)/100),
+      Qout = ifelse(Qnet<0,Qnet+Vw/tau,Vw/tau)*dt,
+      Qin = ifelse(Qnet>=0,Qnet+Vw/tau,Vw/tau)*dt) %>%
+    na.omit
+  df.hc.unit$t = df.hc.unit$days_elapsed - df.hc.unit$days_elapsed[1]
+  write_csv(df.hc.unit,paste0("df.hydroclimate.1m.",sp,".csv"))
+  save(df.hc.unit,file=paste0("df.hydroclimate.1m.",sp,".Rdata"))
+}) # end subroutine
+```
+
+```{r}
+#rm(list = ls())
+#(tidyverse)
+
+init <- expression({
+  t = 0
+  dt = 1 # time step in days
+  nsteps = nrow(df.hc.unit)/dt
+  ndays = nrow(df.hc.unit)
+  iters = 1:nsteps
+  A=1
+  HRT = 1
+  porosity = 1
+  Qg=0
+
+  
+  df.hc.model <- data.frame(t=rep(NA,nsteps),
+                          ip=rep(NA,nsteps),
+                          ET=rep(NA,nsteps),
+                          Qg=rep(NA,nsteps),
+                          Qin=rep(NA,nsteps),
+                          Qout=rep(NA,nsteps),
+                          dVw=rep(NA,nsteps),
+                          Vw=rep(NA,nsteps),
+                          Hw=rep(NA,nsteps))
+  # FORCING FUNCTIONS
+  f.ET <- approxfun(df.hc.unit$t,df.hc.unit$ET)
+  f.ip <- approxfun(df.hc.unit$t,df.hc.unit$ip)
+  f.dHw <- approxfun(df.hc.unit$t,df.hc.unit$dHw)
+  f.Hw <- approxfun(df.hc.unit$t,df.hc.unit$Hw)
+})
+
+odes <- expression({
+  if(i == ndays) break()
+  t = t + dt # move time foreword
+  ip = f.ip(t)*dt # precipitation
+  ET = f.ET(t)*dt #evapotranspiration
+  Hw = f.Hw(t) # water depth
+  Vw = Hw*A*porosity # water volume
+  dHw =f.dHw(t)*dt # change in depth
+  dVw = dHw*A*porosity
+  Qnet = A*(porosity*dHw - (ip - ET)/100)
+  Qout = ifelse(Qnet<0,Qnet+Vw/HRT,Vw/HRT)*dt
+  Qin = ifelse(Qnet>=0,Qnet+Vw/HRT,Vw/HRT)*dt
+  #cat("\ni=",i," t=",t," dVw (m3)=",dVw)
+  if(Vw < 0){
+     Qout = Qout + dVw
+     dVw = 0
+     Vw = 0
+  }
+
+  #cat("\ni=",i," dVw (m3)=",dVw)
+  # save outputs in dataframe 
+  df.hc.model$t[i]=t
+  df.hc.model$Qg[i]=Qg
+  df.hc.model$Qin[i]=Qin
+  df.hc.model$Qout[i]=Qout
+  df.hc.model$dVw[i]=dVw
+  df.hc.model$Hw[i]=Hw
+  df.hc.model$ip[i]=ip
+  df.hc.model$ET[i]=ET
+  df.hc.model$Vw[i]=Vw
+})
+
+run <- expression({
+  eval(init)
+  for (i in iters){
+    eval(odes)
+    }
+  })
+```
+
+```{r area 1m}
+#load("C:\\Workspace\\wetlandP\\data\\lcbp\\hifreq.Rdata")
+# p <- 0
+# s <-  "OCD"
+# eval(sub_hydrology_preprocessing)
+
+sites <- c("LC","OCD","OCSP")
+plots <- 0:4
+for(s in sites){
+  for(p in plots){
+  eval(sub_hydrology_preprocessing)
+  }}
+```
+
+Calculate Storage Based on Water balance
+
+
+```
+library(dplyr)
+df.obspred <- inner_join(df.hc.unit %>% ungroup %>% mutate(t=as.double(t)) %>% select(t,Vw,Hw),
+                         df.hc.model %>% select(t,Vw_pr=Vw,Hw_pr=Hw))
+
+df.hc.model.long <- df.hc.model %>% group_by(t) %>% pivot_longer(cols=c(-t))
+df.hc.model.long %>% ggplot() + geom_line(aes(x=t,y=value)) + facet_wrap(vars(name),scales="free")
+View(df.obspred)
+df.obspred %>% ggplot() + geom_line(aes(x=t,y=Vw))+geom_line(aes(x=t,y=Vw_pr),color="red",linetype="dashed")
+lm(Vw_pr~Vw,data=df.obspred) %>% summary
+```

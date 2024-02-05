@@ -1,0 +1,10 @@
+# METADATA///
+# OCSP = Otter Creek Swamps Preserve (TNC), West Salisbury VT
+# datetime = date time in POSIXct format YYYY-MM-DDThh-mm-ssZ
+# height = water height in meters above median soil elevation
+# HOBO MX2001 water level logger, placed in floodplain
+# Data corrected for local barometric pressure
+# Author: Adrian Wiegman adrian.wiegman@gmail.com
+# EPA Grant: LC00A00394
+# DATA///
+datetime,height

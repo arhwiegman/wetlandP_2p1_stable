@@ -62,8 +62,10 @@ IO_assim_rootP = T  # logical T/F or 1/0 |  toggles growth of root P |
 IO_mort_shootP2litterP = T # logical T/F or 1/0 | toggles mortality of shoots | 
 IO_mort_rootP2LOP = T # logical T/F or 1/0 | toggles mortality of root P to LOP |
 IO_mort_rootP2ROP = T # logical T/F or 1/0 | toggles mortatlity of root P |
+
 IO_sed_IM = T # logical T/F or 1/0 | toggles sedimentation of inorganic matter | 
 IO_sed_OM = T # logical T/F or 1/0 | toggles sedimentation of refractory organic P
+
 IO_decay_litter = T # logical T/F or 1/0 | toggles decomposition of litter P to refractory organic P | 
 IO_decay_LOP = T # logical T/F or 1/0 | toggles decomposition of labile OP | 
 IO_decay_ROP = T # logical T/F or 1/0 | toggles decomposition of refractory OP | 
@@ -75,8 +77,10 @@ parameters$IO_assim_rootP = T  # logical T/F or 1/0 |  toggles growth of root P 
 parameters$IO_mort_shootP2litterP = T # logical T/F or 1/0 | toggles mortality of shoots | 
 parameters$IO_mort_rootP2LOP = T # logical T/F or 1/0 | toggles mortality of root P to LOP |
 parameters$IO_mort_rootP2ROP = T # logical T/F or 1/0 | toggles mortatlity of root P |
+
 parameters$IO_sed_IM = IO_sed_IM  # logical T/F or 1/0 | toggles sedimentation of inorganic matter | 
 parameters$IO_sed_OM = IO_sed_OM # logical T/F or 1/0 | toggles sedimentation of refractory organic P
+
 parameters$IO_decay_litter = T # logical T/F or 1/0 | toggles decomposition of litter P to refractory organic P | 
 parameters$IO_decay_LOP = T # logical T/F or 1/0 | toggles decomposition of labile OP | 
 parameters$IO_decay_ROP = T # logical T/F or 1/0 | toggles decomposition of refractory OP | 

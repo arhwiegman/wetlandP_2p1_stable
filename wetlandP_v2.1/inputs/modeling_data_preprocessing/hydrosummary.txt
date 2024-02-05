@@ -1,0 +1,41 @@
+summary by site and water year
+
+
+LC 18/19 
+
+LC 18/19 
+
+list(variable = c("hydroperiod", "max"), n = c(1, 1), min = c(2, 0.005), max = c(2, 0.005), median = c(2, 0.005), q1 = c(`25%` = 2, `25%` = 0.005), q3 = c(`75%` = 2, `75%` = 0.005), iqr = c(0, 0), mad = c(0, 0), mean = c(2, 0.005), sd = c(NA, NA), se = c(NA, NA), ci = c(NA, NA))
+list(depth_sum = 0.00455503168153371, hydroperiod_sum = 2)
+LC 19/20 
+
+list(variable = c("hydroperiod", "max"), n = c(10, 10), min = c(3, 0.029), max = c(21, 0.277), median = c(8.5, 0.076), q1 = c(`25%` = 4.5, `25%` = 0.051), q3 = c(`75%` = 10, `75%` = 0.09), iqr = c(5.5, 0.04), mad = c(4.448, 0.024), mean = c(8.6, 0.089), sd = c(5.42, 0.07), se = c(1.714, 0.022), ci = c(3.877, 0.05))
+list(depth_sum = 0.885710058185651, hydroperiod_sum = 86)
+LC 20/21 
+
+list(variable = c("hydroperiod", "max"), n = c(2, 2), min = c(2, 0.026), max = c(2, 0.054), median = c(2, 0.04), q1 = c(`25%` = 2, `25%` = 0.033), q3 = c(`75%` = 2, `75%` = 0.047), iqr = c(0, 0.014), mad = c(0, 0.021), mean = c(2, 0.04), sd = c(0, 0.02), se = c(0, 0.014), ci = c(0, 0.176))
+list(depth_sum = 0.0803461187691568, hydroperiod_sum = 4)
+OCD 18/19 
+
+list(variable = character(0), n = numeric(0), min = numeric(0), max = numeric(0), median = numeric(0), q1 = numeric(0), q3 = numeric(0), iqr = numeric(0), mad = numeric(0), mean = numeric(0), sd = numeric(0), se = numeric(0), ci = numeric(0))
+list(depth_sum = 0, hydroperiod_sum = 0)
+OCD 19/20 
+
+list(variable = c("hydroperiod", "max"), n = c(1, 1), min = c(187, 0.674), max = c(187, 0.674), median = c(187, 0.674), q1 = c(`25%` = 187, `25%` = 0.674), q3 = c(`75%` = 187, `75%` = 0.674), iqr = c(0, 0), mad = c(0, 0), mean = c(187, 0.674), sd = c(NA, NA), se = c(NA, NA), ci = c(NA, NA))
+list(depth_sum = 0.674150362176761, hydroperiod_sum = 187)
+OCD 20/21 
+
+list(variable = c("hydroperiod", "max"), n = c(6, 6), min = c(6, 0.027), max = c(19, 0.887), median = c(15, 0.464), q1 = c(`25%` = 11.25, `25%` = 0.068), q3 = c(`75%` = 18.75, `75%` = 0.821), iqr = c(7.5, 0.753), mad = c(5.93, 0.571), mean = c(14.167, 0.453), sd = c(5.345, 0.428), se = c(2.182, 0.175), ci = c(5.609, 0.449))
+list(depth_sum = 2.71731296701675, hydroperiod_sum = 85)
+OCSP 18/19 
+
+list(variable = c("hydroperiod", "max"), n = c(1, 1), min = c(13, 0.596), max = c(13, 0.596), median = c(13, 0.596), q1 = c(`25%` = 13, `25%` = 0.596), q3 = c(`75%` = 13, `75%` = 0.596), iqr = c(0, 0), mad = c(0, 0), mean = c(13, 0.596), sd = c(NA, NA), se = c(NA, NA), ci = c(NA, NA))
+list(depth_sum = 0.595878161372823, hydroperiod_sum = 13)
+OCSP 19/20 
+
+list(variable = c("hydroperiod", "max"), n = c(1, 1), min = c(65, 0.907), max = c(65, 0.907), median = c(65, 0.907), q1 = c(`25%` = 65, `25%` = 0.907), q3 = c(`75%` = 65, `75%` = 0.907), iqr = c(0, 0), mad = c(0, 0), mean = c(65, 0.907), sd = c(NA, NA), se = c(NA, NA), ci = c(NA, NA))
+list(depth_sum = 0.907222010523313, hydroperiod_sum = 65)
+OCSP 20/21 
+
+list(variable = c("hydroperiod", "max"), n = c(5, 5), min = c(2, 0.003), max = c(84, 1.049), median = c(6, 0.152), q1 = c(`25%` = 3, `25%` = 0.083), q3 = c(`75%` = 15, `75%` = 0.583), iqr = c(12, 0.5), mad = c(5.93, 0.221), mean = c(22, 0.374), sd = c(35.036, 0.439), se = c(15.668, 0.196), ci = c(43.503, 0.545))
+list(depth_sum = 1.87006978374886, hydroperiod_sum = 110)
