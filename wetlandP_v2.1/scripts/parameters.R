@@ -2,16 +2,15 @@
 # filename: parameters.R
 # description: declare parameter values and assemble in vector
 # author: Adrian R.H. Wiegman
-# revision date:  2021-10-06
+# revision date:  2024-06-18
 # project: wetlandP
 # repository: https://github.com/arhwiegman/wetlandP    
 # notes:
 # - currently using annual averages for VT for forcing parameters
-# - need to separate parameters into (site specific) and global parameters
-# - need to create interactive parameter entry
-#     - for interactive feedback use snippet "popbox"
+# - added "path2userparameterfile" and "sub_compile_parameters_user"
+# - together these allow the user to modify the parameters with just one line within xecute
 # **************************************************************
-sub_set_parameters <- expression({
+sub_set_parameters_default <- expression({
   # SIMULATION SPECIFICATIONS -------------
   # name = value # units | description | assumptions
   version = "wetlandPv02" # chr | name of the model version 
@@ -22,7 +21,8 @@ sub_set_parameters <- expression({
   increment = 1 # d | number of days in each time step of model; if not equal to 1 then accuracy of simulation needs to be verified
   extended_outputs = T # logical | True/False indicating if the purpose of the run is to debug; if so writes extended outputs, this significantly slows the run
   inputdir = NULL # name of the path to the folder containing input data
-  forcingfile = NULL # name of the input data file 
+  forcingfile = NULL # name of the input data file
+  path2userparameterfile = NULL # name of file to used edit default parameters with user derived values
   solver = "lsoda" # chr | name of ode solver method "lsoda","euler","iter","rk4"
   
   
@@ -240,21 +240,46 @@ sub_check_process_IOs <- expression({
   }
 })
 
-
 sub_mget_parameters_from_globenv_vectors <- expression({
-  # this subroutine compiles the vector objects from the global environment into one vector called parameters
+  # this subroutine compiles the vector objects from the global environment into one list called parameters
   . = names(Filter(is.vector, mget(ls(all=T))))
   . <- .[!str_detect(.,"^sub_")]
+  . <- .[!str_detect(.,"^parameters$")]
   parameters <- mget(.)
 })
 
-sub_compile_parameters <- expression({
-  eval(sub_set_parameters)
+sub_compile_parameters_default <- expression({
+  eval(sub_set_parameters__default)
   eval(sub_check_process_IOs)
   eval(sub_mget_parameters_from_globenv_vectors)
 })
 
-eval(sub_compile_parameters)
+sub_set_user_parameters <- expression({
+  # if a script to modify input parameters has been declared then this subroutine will run that script
+  if(!is.null(path2userparameterscript))
+  try(source(path2userparameterscript))
+})
+
+sub_compile_parameters_user <- expression({
+  # initialize default parameter values
+  eval(sub_set_parameters_default)
+  
+  # check that processes IOs are logical
+  eval(sub_check_process_IOs)
+  
+  # creates a list containing all parameter vectors
+  eval(sub_mget_parameters_from_globenv_vectors)
+  
+  # provide user input now that defaults have been set
+  eval(sub_set_user_parameters)
+  
+  # update the parameters object with user inputs
+  eval(sub_mget_parameters_from_globenv_vectors)
+})
+
+
+# run the subroutines to compile parameters into a list
+eval(sub_compile_parameters_user)
 
 
 

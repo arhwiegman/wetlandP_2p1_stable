@@ -53,7 +53,7 @@ sub_plot_DIP_concentration_t <- expression({
            `DIP_b (mg/L)` = DIP_b/V_w_b,
            `LOI_b (g/g)` = LOI_b,
            `P Saturation Ratio` = PSR,
-           `Langmuir E (m3/g)` = E,
+           #`Langmuir E (m3/g)` = E,
            `Ex_max g/kg`= Ex_max,
            `DIP_E (mg/L)` = DIP_E) %>%
     select(t,`DIP_a (mg/L)`,`DIP_b (mg/L)`,`DIP_E (mg/L)`,`P Saturation Ratio`,`Ex_max g/kg`,`LOI_b (g/g)`) %>%

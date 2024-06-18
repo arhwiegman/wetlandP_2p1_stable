@@ -1,0 +1,80 @@
+"0","rm(list=ls())"
+"0","if (!require(""pacman"")) install.packages(""pacman""); library(pacman)"
+"0","knitr::opts_chunk$set(echo = FALSE,"
+"0","                      warning = FALSE,"
+"0","                      message= FALSE)"
+"0","dependancies <- c(""tidyverse"","
+"0","                  ""zoo"", # time series functions"
+"0","                  ""broom"", # applying functions to nested data"
+"0","                  ""Evapotranspiration"", # evapotranspiration modeling"
+"0","                  ""lubridate"", # easy date formatting"
+"0","                  ""forecast"", # time series functions"
+"0","                  ""cowplot"", # to make nice figure pannels"
+"0","                  ""patchwork"", # to make nice figure pannels"
+"0","                  ""scales"", # to access break formatting functions"
+"0","                  ""akima"", # for interpolation of matrixes"
+"0","                  ""rgl"","
+"0","                  ""stringr"") # for plotting 3d matrixes"
+"0","pacman::p_load(dependancies,character.only = T)"
+"2","Installing package into ‘C:/Users/Adrian.Wiegman/AppData/Local/R/win-library/4.3’
+(as ‘lib’ is unspecified)
+"
+"2","Warning:"
+"2"," unable to access index for repository http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.3:
+  cannot open URL 'http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.3/PACKAGES'
+"
+"2","trying URL 'https://cloud.r-project.org/bin/windows/contrib/4.3/patchwork_1.2.0.zip'
+"
+"2","Content type 'application/zip'"
+"2"," length 3299843 bytes (3.1 MB)
+"
+"2","downloaded 3.1 MB
+
+"
+"1","package ‘patchwork’ successfully unpacked and MD5 sums checked
+"
+"1","
+"
+"1",""
+"1","The downloaded binary packages are in
+	C:\Users\Adrian.Wiegman\AppData\Local\Temp\RtmpkFzIUv\downloaded_packages"
+"1",""
+"1","
+"
+"2","
+patchwork installed
+"
+"2","Warning:"
+"2"," package ‘patchwork’ was built under R version 4.3.3
+"
+"2","Installing package into ‘C:/Users/Adrian.Wiegman/AppData/Local/R/win-library/4.3’
+(as ‘lib’ is unspecified)
+"
+"2","Warning:"
+"2"," unable to access index for repository http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.3:
+  cannot open URL 'http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.3/PACKAGES'
+"
+"2","trying URL 'https://cloud.r-project.org/bin/windows/contrib/4.3/rgl_1.3.1.zip'
+"
+"2","Content type 'application/zip'"
+"2"," length 5513109 bytes (5.3 MB)
+"
+"2","downloaded 5.3 MB
+
+"
+"1","package ‘rgl’ successfully unpacked and MD5 sums checked
+"
+"1","
+"
+"1",""
+"1","The downloaded binary packages are in
+	C:\Users\Adrian.Wiegman\AppData\Local\Temp\RtmpkFzIUv\downloaded_packages"
+"1",""
+"1","
+"
+"2","
+rgl installed
+"
+"2","Warning:"
+"2"," package ‘rgl’ was built under R version 4.3.3
+"
