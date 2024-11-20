@@ -11,8 +11,8 @@
 # CLEAR GLOBAL ENVIRONMENT ---------------------------------
 rm(list = ls(all.names = TRUE)) # will clear all objects 
 gc() #free up memory and report the memory usage.
-wrkdir <- getwd() # set up working directory in ~/wetlandP_v2.1 folder
-#wrkdir <- "C:/Workspace/wetlandP/model_versions/wetlandP_v2/wetlandP_v2.1"
+#wrkdir <- getwd() # set up working directory in ~/wetlandP_v2.1 folder
+wrkdir <- "C:/Workspace/wetlandP/model_versions/wetlandP_v2/wetlandP_v2.1"
 
 # LOAD DEPENDANCIES and SOURCE CODE ------------------------
 try(setwd(file.path(wrkdir,"scripts"))) # navigate to scripts folder 
