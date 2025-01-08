@@ -1,13 +1,27 @@
 # **************************************************************
 # filename: climate_preprocessing.R
-# description: preprocesses climate data from NOAA NCDC weather stations
+# description: preprocesses climate data from NOAA weather stations
+# Inputs: 
+#   a comma separated values file with subdaily data exported from 
+#   NOAA National Climate Data Center > Climate Data Online > Local Climate Data >
+#   > select your sites > order "LCD CSV" format
+#   https://www.ncdc.noaa.gov/cdo-web/datatools/lcd
+# Outputs converts into subdaily and daily dataframe objects containing
+# - precipitation 
+# - air temperature
+# - cloud cover
+# - anticedent moisture conditions (for soil)
+# - evapotranspiration (modeled via Penman Monteith or Priestly Taylor) 
+#    - for evapo
 # author: adrian wiegman 
 # revision date:  2021-02-11
 # project: LCBP wetland P 
-# repository: https://github.com/arhwiegman/___    
+# repository: https://github.com/arhwiegman/wetlandP_2p1_stable/wetlandP_v2.1/inputs/modeling_data_preprocessing/climate_preprocessing.R    
 # notes:
-# - R is prone to crashing when nesting and unnesting data
-# - ___
+# - 2025-01-08
+#   - download link for local climate data: https://www.ncdc.noaa.gov/cdo-web/datatools/lcd
+# - superceded 
+#   - R is prone to crashing when nesting and unnesting data
 # **************************************************************
 
 
@@ -220,11 +234,11 @@ df.climate.sunshine <- df.climate.sun %>%
 
 # Ward, A. D., Trimble, S. W., Burckhard, S. R., & Lyon, J. G. (2016). Environmental Hydrology (Third Edit). CRC Press Taylor and Francis Group.
 
-# antecedent moisture conditions
-# 1. dry: Dormant season total 5-day antecedent rainfall less than 0.5 in. Growing season total 5-day antecedent rain- fall less than 1.4 in. 
-# 2. normal: Dormant season total 5-day antecedent rainfall between 0.5 and 1.1 in. Growing season total 5-day anteced- ent rainfall between 1.4 and 2.1 in. 
-# 3. wet: Dormant season total 5-day antecedent rainfall greater than 1.1 in. Growing season total 5-day antecedent rainfall greater than 2.1 in.
-# 4. frozen or saturated: 14day average temp is less than 32F, or 14day average temp is less than 40F and 5day antecedent rainfall is greater than  
+# antecedent moisture condition (
+# 1. dry (I) : Dormant season total 5-day antecedent rainfall less than 0.5 in. Growing season total 5-day antecedent rain- fall less than 1.4 in. 
+# 2. normal (II): Dormant season total 5-day antecedent rainfall between 0.5 and 1.1 in. Growing season total 5-day anteced- ent rainfall between 1.4 and 2.1 in. 
+# 3. wet (III): Dormant season total 5-day antecedent rainfall greater than 1.1 in. Growing season total 5-day antecedent rainfall greater than 2.1 in.
+# 4. frozen or saturated: 14day average temp is less than 32F, or 14day average temp is less than 40F and 5day antecedent rainfall is greater than 1.1?
 df.climate.amc <- df.climate.sunshine %>% 
   filter(report_dt=="day") %>%
   group_by(city,report_dt) %>%
@@ -259,7 +273,7 @@ df.climate.amc <- df.climate.sunshine %>%
       Daily5DayAntPrecipitation > 1.1 ~ 3,
     Daily14DayMeanTemp < 32 ~ 4,
     Daily14DayMeanTemp < 40 &
-      Daily5DayAntPrecipitation <= 2.1 ~ 4,
+      Daily5DayAntPrecipitation <= 1.1 ~ 4, # is this supposed to be  1.1? -aw 2025-01-08
   )) %>%
   ungroup %>%
   select(city,date,month,season,
