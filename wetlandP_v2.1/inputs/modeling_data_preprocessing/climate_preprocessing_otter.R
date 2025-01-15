@@ -94,7 +94,8 @@ df.climate.sub <- df.climate.full %>%
 # interpolate missing values --------------------------
 # 2021-02-11
 
-# NEST DATA AND FILL MISSNING VALUES WITH LINEAR INTERPOLATION
+# CREATE NEST DATASETS FOR HOURLY, DAILY, MONTHLY RECORDS 
+# AND FILL MISSNING VALUES WITH LINEAR INTERPOLATION
 df.climate.approx.nested <- df.climate.sub %>% 
   group_by(city,report_dt) %>% 
   arrange(datetime) %>%
@@ -108,9 +109,9 @@ df.climate.approx.nested <- df.climate.sub %>%
                                       -starts_with("Month"),
                                       -starts_with("Sun")) %>%
                                select_if(is.numeric) %>%
-                               zoo %>%
-                               na.approx(na.rm=FALSE) %>%
-                               fortify.zoo %>%
+                               zoo %>% # converts to zoo object
+                               na.approx(na.rm=FALSE) %>% # interpolate between na values
+                               fortify.zoo %>% # convert back to dataframe 
                                select(-Index,-time)
                              } 
                            )
@@ -169,6 +170,12 @@ df.climate.approx <- df.climate.approx.nested %>%
 
 
 # sunshine --------------------------
+# average solar shortwave radiation estimate at Middleburry by month
+# This section discusses the total daily incident shortwave solar energy reaching the surface 
+# of the ground over a wide area, taking full account of seasonal variations in the length of the day, 
+# the elevation of the Sun above the horizon, and absorption by clouds and other atmospheric constituents. 
+# Shortwave radiation includes visible light and ultraviolet radiation.
+# https://weatherspark.com/m/24991/12/Average-Weather-in-December-in-Middlebury-(village)-Vermont-United-States#Sections-SolarEnergy
 # 2021-02-11
 middlebur_kWh <- "
 Month, Day, Solar kWh/m2
@@ -185,7 +192,6 @@ Sep, 30, 3.9
 Oct, 30, 2.5
 Dec, 1, 1.5
 "
-#https://weatherspark.com/m/24991/12/Average-Weather-in-December-in-Middlebury-(village)-Vermont-United-States#Sections-SolarEnergy
 
 
 
